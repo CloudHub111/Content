@@ -1,0 +1,65 @@
+-- For that one YouTube video xd
+local Gui = Instance.new("ScreenGui", gethui())
+Gui.IgnoreGuiInset = true
+
+local Frame = Instance.new("Frame", Gui)
+Frame.BackgroundColor3 = Color3.new(0,0,0)
+Frame.Size = UDim2.fromScale(1,1)
+Frame.BackgroundTransparency = 0
+
+local Img1 = Instance.new("ImageButton", Frame)
+Img1.Image = "rbxassetid://107170354899183"
+Img1.BackgroundTransparency = 1
+Img1.Size = UDim2.fromScale(0.3,0.5)
+Img1.Position = UDim2.fromScale(0.1,0.5)
+Img1.AnchorPoint = Vector2.new(0,0.5)
+
+local Img2 = Instance.new("ImageButton", Frame)
+Img2.Image = "rbxassetid://84874351157098"
+Img2.BackgroundTransparency = 1
+Img2.Size = UDim2.fromScale(0.3,0.5)
+Img2.Position = UDim2.fromScale(0.9,0.5)
+Img2.AnchorPoint = Vector2.new(1,0.5)
+
+local Text1 = Instance.new("TextLabel", Frame)
+Text1.Text = "Noli prankster"
+Text1.Size = UDim2.fromScale(0.15,0.1)
+Text1.Position = UDim2.fromScale(0.1,0.05)
+Text1.BackgroundTransparency = 1
+Text1.TextScaled = true
+Text1.TextColor3 = Color3.new(1,1,1)
+
+local Text2 = Instance.new("TextLabel", Frame)
+Text2.Text = "VS"
+Text2.Size = UDim2.fromScale(0.1,0.05)
+Text2.Position = UDim2.fromScale(0.45,0.05)
+Text2.BackgroundTransparency = 1
+Text2.TextScaled = true
+Text2.TextColor3 = Color3.new(1,1,1)
+
+local Text3 = Instance.new("TextLabel", Frame)
+Text3.Text = "NaN Noob"
+Text3.Size = UDim2.fromScale(0.15,0.1)
+Text3.Position = UDim2.fromScale(0.75,0.05)
+Text3.BackgroundTransparency = 1
+Text3.TextScaled = true
+Text3.TextColor3 = Color3.new(1,1,1)
+
+Img1.ImageTransparency, Img2.ImageTransparency = 1,1
+Text1.TextTransparency, Text2.TextTransparency, Text3.TextTransparency = 1,1,1
+
+task.spawn(function()
+	local a=Instance.new("Sound",workspace)
+	a.SoundId="rbxassetid://88166434841925"
+	a:Play()
+	task.delay(79,function() a:Destroy()Gui:Destroy() end)
+end)
+
+for i=1,30 do
+	task.wait(0.05)
+	Img1.ImageTransparency = 1 - i/30
+	Img2.ImageTransparency = 1 - i/30
+	Text1.TextTransparency = 1 - i/30
+	Text2.TextTransparency = 1 - i/30
+	Text3.TextTransparency = 1 - i/30
+end
