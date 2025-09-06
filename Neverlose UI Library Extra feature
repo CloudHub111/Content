@@ -1541,6 +1541,8 @@ Box.Position=UDim2.new(0,0,0.45,0)
 Box.BackgroundColor3=NEVERLOSE.Themes.BlackgroundColor
 Box.BackgroundTransparency=1
 Box.Text=Text
+Box.PlaceholderText=PlaceholderText
+Box.ClearTextOnFocus=false
 Box.TextScaled=true
 
 local RunService = game:GetService("RunService")
