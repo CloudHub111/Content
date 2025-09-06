@@ -1558,7 +1558,7 @@ local function Fade(In)
 end
 
 Box.Focused:Connect(function() Fade(true) end)
-Box.FocusLost:Connect(function() Fade(false) end)
+Box.FocusLost:Connect(function() callback(Box.Text) Fade(false) end)
 
 sectionfunc:AddLabel(TextboxName)
 local TextBoxButt=sectionfunc:AddButton(Text,function()
