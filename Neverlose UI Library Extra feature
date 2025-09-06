@@ -1543,8 +1543,12 @@ Box.Visible=false
 Box.Text=Text
 Box.PlaceholderText=PlaceholderText
 Box.ClearTextOnFocus=false
-Box.TextScaled=true
+Box.TextSize=15
 Box.TextColor3=Color3.fromRGB(255,255,255)
+local UIStroke=Instance.new("UIStroke",Box)
+UIStroke.Thickness = 0.500
+UIStroke.Color = NEVERLOSE.Themes.StrokeColor
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 local Gradient = Instance.new("UIGradient")
 Gradient.Color = ColorSequence.new{
