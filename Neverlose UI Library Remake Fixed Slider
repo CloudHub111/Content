@@ -1472,8 +1472,16 @@ function NEVERLOSE:AddWindow(NameScriptHub,Text,UICustomSize)
 local function update(Input)
     local SizeScale = math.clamp(((Input.Position.X - MoveFrame.AbsolutePosition.X) / MoveFrame.AbsoluteSize.X), 0, 1)
     local Valuea = math.floor(((Max - Min) * SizeScale) + Min)
+    local Size
+    if Valuea <= Min then
+        Size = UDim2.fromScale(0, 1)
+    elseif Valuea >= Max then
+        Size = UDim2.fromScale(1, 1)
+    else
+        Size = UDim2.fromScale(math.clamp(SizeScale, 0.02, 1), 1)
+    end
     ValueText.Text = tostring(Valuea)
-    TweenService:Create(Inline, TweenInfo.new(0.1), {Size = UDim2.fromScale(SizeScale, 1)}):Play()
+    TweenService:Create(Inline,TweenInfo.new(0.1),{Size = Size}):Play()
     callback(Valuea)
 end
 
