@@ -1539,26 +1539,41 @@ local Box=Instance.new("TextBox",Gui)
 Box.Size=UDim2.new(1,0,0.1,0)
 Box.Position=UDim2.new(0,0,0.45,0)
 Box.BackgroundColor3=NEVERLOSE.Themes.BlackgroundColor
-Box.BackgroundTransparency=1
+Box.Visible=false
 Box.Text=Text
 Box.PlaceholderText=PlaceholderText
 Box.ClearTextOnFocus=false
 Box.TextScaled=true
+Box.TextColor3=Color3.fromRGB(255,255,255)
 
-local RunService = game:GetService("RunService")
+local Gradient = Instance.new("UIGradient")
+Gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255, 0))
+}
+Gradient.Rotation = 0
+Gradient.Transparency = NumberSequence.new{
+    NumberSequenceKeypoint.new(0, 0.7),
+    NumberSequenceKeypoint.new(0.5, 0),
+    NumberSequenceKeypoint.new(1, 0.7)
+}
+Gradient.Parent = Box
 
-local function Fade(In)
-    local Start = Box.BackgroundTransparency
-    local Target = In and 0 or 1
-    local T = 0
-    while T < 1 do
-        T += RunService.Heartbeat:Wait() / 0.1
-        Box.BackgroundTransparency = Start + (Target - Start) * T
-    end
+task.spawn(function()
+while true do
+    local Info = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+    local Tween = TweenService:Create(Gradient, Info, {Rotation = 180})
+    Tween:Play()
+    Tween.Completed:Wait()
+    local TweenBack = TweenService:Create(Gradient, Info, {Rotation = 0})
+    TweenBack:Play()
+    TweenBack.Completed:Wait()
 end
+end)
 
-Box.Focused:Connect(function() Fade(true) end)
-Box.FocusLost:Connect(function() callback(Box.Text) Fade(false) end)
+Box.Focused:Connect(function() Box.Visible=true end)
+Box.FocusLost:Connect(function() callback(Box.Text) Box.Visible=false end)
 
 sectionfunc:AddLabel(TextboxName)
 local TextBoxButt=sectionfunc:AddButton(Text,function()
