@@ -176,7 +176,7 @@ if not isfolder("NexerHub/Core") then
 makefolder("NexerHub/Core")
 repeat task.wait() until isfolder("NexerHub/Core")
 end
-if not isfile("NexerHub/Core/"..config_save.."") then
+--if not isfile("NexerHub/Core/"..config_save.."") then
 writefile("NexerHub/Core/"..config_save.."", [[return {
     ["Tab_1"] = {
         ["AutoInjection"] = {
@@ -314,7 +314,7 @@ writefile("NexerHub/Core/"..config_save.."", [[return {
     ["Tab_12"] = {}
 }]])
 repeat task.wait() until isfile("NexerHub/Core/"..config_save.."")
-end
+--end
 if not isfile("NexerHub/Core/PreloadData.luau") then
 writefile("NexerHub/Core/PreloadData.luau", [[return {
     ["LoadConfig"] = true,
@@ -360,7 +360,7 @@ temp_msg.Text = "Loading API Module... (0/1)"; task.wait(.2)
 repeat task.wait()
 --if not isfile("NexerHub/Core/APIMODULE.luau") or (isfile("NexerHub/Core/APIMODULE.luau") and loadstring(GetFile("NexerHub/Core/APIMODULE.luau","rf"))()["last_updated"]~=_G.API_last_update) then
 local lodsuc, loderr = pcall(function()
-MainModule = loadstring(game:HttpGet("https://pastebinp.com/raw/G17DaBUh"))()
+MainModule = loadstring(game:HttpGet("https://pastefy.app/eCGEWgIf/raw"))()
 end)
 if not lodsuc then
 temp_msg.Text = "Failed loading API Module, re-trying..."
@@ -427,7 +427,8 @@ return
 end
 
 temp_msg.Text = "Loading Core Assets... ("..asset_counter.."/25)"
-if HaveWorkspaceAccess() and loadstring(GetFile("NexerHub/Core/PreloadData.luau","rf"))().LoadAssets == true then
+--loadstring(GetFile("NexerHub/Core/PreloadData.luau","rf"))().LoadAssets == true
+if HaveWorkspaceAccess() and false == true then
 if not isfolder("NexerHub") then
 makefolder("NexerHub")
 repeat task.wait(.1) until isfolder("NexerHub")
@@ -652,7 +653,7 @@ pcall(function()
 local Announcements = Window:CreateTab("Announce",0)
 Announcements:CreateParagraph({Title = "W.I.P.", Content = "A lot of stuff haven't been added yet. Work is in progress. I have a lot of studies which is why it takes a lot of time."})
 Announcements:CreateParagraph({Title = "Discord suggestions", Content = "They'll be added soon! I will be updating everyday i can."})
-Announcements:CreateParagraph({Title = "Configuration", Content = "At this moment, configurations in premium tab aren't being saving. The premium tab will be re-ordered soon."})
+Announcements:CreateParagraph({Title = "Configuration", Content = "At this moment, configurations aren't being saving due to multiple bugs. The premium tab will be re-ordered soon."})
 Announcements:CreateButton({Name = "Copy Discord Server Link"; Callback = function()
 setclipboard(tostring("https://discord.gg/7u5GRNw3xn"))
 Notify("Success!", "Copied Link!", 3, true)
@@ -797,7 +798,7 @@ SetStaminaProperty("Fatigue", 0)
 end
 until NoFatigue == false
 end; })
-NoFatigueToggle:Set(NoFatigue)
+--NoFatigueToggle:Set(NoFatigue)
 
 Tab_1:CreateSection("Advanced")
 
@@ -829,6 +830,7 @@ Tab_1:CreateToggle({Name = "Sprint Disabled"; CurrentValue = false; Callback = f
 SetStaminaProperty("DisableSprint", Value)
 end; })
 
+--[[
 Tab_1:CreateSection("Auto Injection")
 local AI_MaxStamina, AI_WalkSpeed, AI_SprintSpeed
 
@@ -867,7 +869,7 @@ pcall(function()
 SetStaminaProperty("SprintSpeed", AI_SprintSpeed)
 end)
 end
-end)
+end)]]
 
 
 
@@ -3798,9 +3800,6 @@ local PremiumPrice = GetAssetPrice(1264479709) or 39
 -- YOU CAN GET PREMIUM FOR FREE BY ENTERING A KEY
 -- KEY IS IN MY DISCORD SERVER!!
 local HavePremium = true
-if true then
-HavePremium = true
-end
 
 local Tab_7 = Window:CreateTab("Premium",0)
 Tab_7:CreateParagraph({Title = "Premium", Content = "Premium content here! Very exploitable features."})
@@ -4033,10 +4032,10 @@ end
 local mag = (ClosestHRP.Position - HumanoidRootPart.Position).Magnitude
 local vel = HumanoidRootPart.Velocity
 if mag < 32 then
-HumanoidRootPart.Velocity = (((ClosestHRP.Position - HumanoidRootPart.Position).Unit) * (mag * 10))
+HumanoidRootPart.Velocity = (((ClosestHRP.Position - HumanoidRootPart.Position).Unit) * (mag * 20))
 else
 --if mag < 140 then
-HumanoidRootPart.Velocity = (((ClosestHRP.Position - HumanoidRootPart.Position).Unit) * (mag * 13))
+HumanoidRootPart.Velocity = (((ClosestHRP.Position - HumanoidRootPart.Position).Unit) * (mag * 23))
 end
 game:GetService("RunService").RenderStepped:Wait()
 if (game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character.Parent and game:GetService("Players").LocalPlayer.Character.HumanoidRootPart and game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Parent) then
@@ -4227,7 +4226,7 @@ MorphIntoGhost()
 Notify("Auto-Softlock Enabled!", "Check the label above to see when will specific killers get softlocked.", 5, true)
 end; })
 
-Tab_7:CreateLabel("To use model breaker, you must play as badware during round! You'll have to inject first, and only then destroy models. You can search models using explorer scripts. DO NOT SPAM CLICK OR IT'LL BREAK!")
+--[[Tab_7:CreateLabel("To use model breaker, you must play as badware during round! You'll have to inject first, and only then destroy models. You can search models using explorer scripts. DO NOT SPAM CLICK OR IT'LL BREAK!")
 
 local modeldservice, modeldname = "Workspace", "Type Here!"
 Tab_7:CreateDropdown({Name = "Model Service"; Options = {"Workspace","ReplicatedStorage"}; CurrentOption = "Workspace"; MultiSelection = false; Callback = function(Value)
@@ -4266,7 +4265,7 @@ return
 end
 end
 Notify("Error!", "Model not found.", 2, false)
-end; })
+end; })]]--
 
 Tab_7:CreateSection("Auto Block")
 Tab_7:CreateLabel("{ VERY W.I.P. !!!! } Uses block ability when the killer is attacking you. Your ping must be less than 60 for it to work.")
