@@ -1,1787 +1,1057 @@
-local v_u_1 = {}
-v_u_1.__index = v_u_1
-game:GetService("Players")
+game:GetService("ReplicatedStorage")
+local v_u_1 = game:GetService("TweenService")
 local v_u_2 = game:GetService("RunService")
-local v_u_3 = workspace.Gravity
-local v_u_4 = script.Parent
-local v_u_5 = {}
-local v6 = {}
-local v_u_7 = {}
-local v_u_8 = {}
-local v_u_9 = {
-	["stackOverflow"] = 0,
-	["debugInfo"] = 0,
-	["functionSource"] = 0,
-	["metatables"] = 0,
-	["namecall"] = 0,
-	["closures"] = 0,
-	["environment"] = 0,
-	["constants"] = 0,
-	["stateDesync"] = 0
-}
-local v10 = game:GetService("ReplicatedFirst"):GetChildren()
-local v_u_11 = v10[math.random(1, #v10)];
-(function()
-	-- upvalues: (copy) v_u_5
-	for v12 = 1, 5 do
-		v_u_5[v12] = math.random(1000000, 9999999)
-	end
-end)()
-local v_u_13 = rawget
-local _ = rawset
-local v_u_14 = getmetatable
-local _ = setmetatable
-local v_u_15 = pcall
-local v_u_16 = xpcall
-local v_u_17 = type
-local _ = next
-local v_u_18 = pairs
-local v_u_19 = ipairs
-local v_u_20 = tostring
-local _ = tonumber
-local v_u_21 = debug.info
-local _ = debug.traceback
-local v_u_22 = task.spawn
-local v_u_23 = task.wait
-local v24 = task.delay
-local _ = table.insert
-local v_u_25 = table.concat
-local v26 = table.clone
-local v_u_27 = string.byte
-local v_u_28 = string.char
-local v_u_29 = string.find
-local v_u_30 = string.format
-local v_u_31 = math.random
-local v_u_32 = math.floor
-local v_u_33 = os.clock
-v6.pcall = v_u_15
-v6.xpcall = v_u_16
-v6.type = v_u_17
-v6.getmetatable = v_u_14
-v6.debug_info = v_u_21
-v_u_7[1] = "RenderStepped"
-v_u_7[2] = "HumanoidRootPart"
-v_u_7[3] = "Humanoid"
-v_u_7[4] = 16379
-v_u_7[5] = game
-v_u_7[6] = workspace
-v_u_8.game = game
-v_u_8.workspace = workspace
-v_u_8.pcall_type = v_u_17(v_u_15)
-v_u_8.getmetatable_type = v_u_17(v_u_14)
-local v_u_34 = true
-v_u_15(function()
-	-- upvalues: (copy) v_u_14, (ref) v_u_34
-	v_u_14((newproxy(true))).__gc = function()
-		-- upvalues: (ref) v_u_34
-		v_u_34 = false
-	end
+local v_u_3 = game:GetService("Players")
+require(game.ReplicatedStorage.Modules.AnimationUtil)
+local v_u_4 = require(game.ReplicatedStorage.Modules.WeaponData)
+local v_u_5 = require(game.ReplicatedStorage.Modules.Flags)
+local v_u_6 = require(game.ReplicatedStorage.Modules.Net)
+local v_u_7 = require(game.ReplicatedStorage.Modules.Part.GetBoundingBoxCustom)
+local v_u_8 = require(game.ReplicatedStorage.Modules.Part.GetCornersOfPart)
+local v_u_9 = {}
+local v_u_10 = game.Players.LocalPlayer
+local v_u_11 = workspace.Enemies
+local v_u_12 = workspace.Characters
+local v_u_13 = require(game.ReplicatedStorage.Util.WrapHighlight)
+local v_u_14 = v_u_2:IsServer()
+local v_u_15 = {}
+local v_u_16 = nil
+local v_u_17 = nil
+task.defer(function()
+	-- upvalues: (ref) v_u_16, (ref) v_u_17, (copy) v_u_15, (copy) v_u_6
+	v_u_16 = require(game.ReplicatedStorage.Util)
+	v_u_17 = require(script.Particle)
+	v_u_15.RegisterHitEvent = v_u_6:RemoteEvent("RegisterHit", true)
+	v_u_15.ReceivedHit = v_u_6:RemoteEvent("ReceivedHit")
 end)
-local v_u_35 = v26(v_u_5)
-local function v_u_38()
-	-- upvalues: (copy) v_u_19, (copy) v_u_5, (copy) v_u_35
-	for v36, v37 in v_u_19(v_u_5) do
-		if v37 ~= v_u_35[v36] then
-			return false
-		end
-	end
-	return true
+function v_u_9.GetPureWeaponName(_, p18)
+	return string.lower(string.gsub(p18, "%s", ""))
 end
-local function v_u_40()
-	-- upvalues: (copy) v_u_38
-	local v39 = v_u_38
-	if v39 then
-		v39 = v_u_38()
-	end
-	return v39
+function v_u_9.GetComboPaddingTime(_)
+	return 0.3
 end
-v24(2.31, function()
-	-- upvalues: (ref) v_u_40
-	local v_u_41 = v_u_40
-	v_u_40 = function()
-		-- upvalues: (copy) v_u_41
-		local v42 = v_u_41
-		if v42 then
-			v42 = v_u_41()
-		end
-		return v42
+function v_u_9.GetDefaultAOEDelay(_)
+	return 0.35
+end
+function v_u_9.GetAttackCancelMultiplier(_)
+	return 0.8
+end
+local v_u_19 = require(game.ReplicatedStorage.Util.IsTransformed)
+function v_u_9.HasRigEquipped(_, p20)
+	-- upvalues: (copy) v_u_19
+	if p20:FindFirstChild("HumanoidRootPart") and p20.HumanoidRootPart:FindFirstChild("Buddha") then
+		return false
+	else
+		return v_u_19(p20, false, false)
 	end
-end)
-local function v_u_81()
-	-- upvalues: (copy) v_u_16, (copy) v_u_21, (copy) v_u_15, (copy) v_u_29, (copy) v_u_20, (copy) v_u_9, (copy) v_u_17, (copy) v_u_14, (copy) v_u_31, (copy) v_u_13, (copy) v_u_18
-	local v43 = {
-		["stackOverflow"] = true,
-		["debugInfo"] = true,
-		["metatables"] = true,
-		["namecall"] = true,
-		["closures"] = true,
-		["tableIntegrity"] = true
-	}
-	local v_u_44 = nil
-	v_u_16(function()
-		return game.AAAAAAA
-	end, function()
-		-- upvalues: (ref) v_u_44, (ref) v_u_21
-		v_u_44 = v_u_21(2, "f")
-	end)
-	local v_u_45 = v_u_44
-	local v46
-	if v_u_45 then
-		local v52, v53 = v_u_15(function()
-			-- upvalues: (copy) v_u_45, (ref) v_u_15, (ref) v_u_29, (ref) v_u_20
-			local function v_u_48(p47)
-				-- upvalues: (ref) v_u_48, (ref) v_u_45
-				if p47 < 16379 then
-					return v_u_48(p47 + 1)
-				else
-					return v_u_45(workspace, "Name")
+end
+function v_u_9.CanAttack(_, p21, p22)
+	-- upvalues: (copy) v_u_9
+	if (_G.tapCooldown or 0) > os.clock() then
+		return
+	else
+		local v23
+		if p21 then
+			v23 = p21:FindFirstChildWhichIsA("Humanoid")
+		else
+			v23 = p21
+		end
+		if v23 and v23.Health > 0 then
+			local v24 = p21:FindFirstChild("Stun")
+			local v25 = p21:FindFirstChild("Busy")
+			if v23.Sit and (p22 == "Sword" or (p22 == "Melee" or p22 == "Gun")) then
+				return
+			elseif (not v24 or v24.Value <= 0) and not (v25 and v25.Value) then
+				if not v_u_9:HasRigEquipped(p21) then
+					return true
 				end
 			end
-			local v49, v50 = v_u_15(v_u_48, 1)
-			local v51 = not v49
+		else
+			return
+		end
+	end
+end
+function v_u_9.IsVulnerable(_, p26)
+	-- upvalues: (copy) v_u_2, (copy) v_u_3
+	if p26 then
+		local v27
+		if p26 then
+			v27 = p26:FindFirstChildWhichIsA("Humanoid")
+		else
+			v27 = p26
+		end
+		local v28 = v27.Health > 0
+		if v_u_2:IsServer() then
+			local v29 = _G.getWrappedPlayer(v_u_3:GetPlayerFromCharacter(p26))
+			if v29 and v29:dodging() then
+				return false
+			end
+		end
+		return v28
+	end
+end
+function v_u_9.GetRigOfHitPart(_, p30)
+	-- upvalues: (copy) v_u_11, (copy) v_u_12
+	local v31 = p30:FindFirstAncestorWhichIsA("Tool")
+	if v31 then
+		return v31.Parent
+	end
+	for _, v32 in { v_u_11, v_u_12 } do
+		for _, v33 in v32:GetChildren() do
+			if p30:IsDescendantOf(v33) then
+				return v33
+			end
+		end
+	end
+end
+local v_u_34 = v_u_17
+local v_u_35 = v_u_16
+local v_u_36 = {}
+local v_u_37 = false
+local v_u_38 = nil
+for _, v39 in {
+	"RightUpperArm",
+	"RightLowerArm",
+	"RightHand",
+	"RightUpperLeg",
+	"RightLowerLeg",
+	"RightFoot",
+	"LeftUpperArm",
+	"LeftLowerArm",
+	"LeftHand",
+	"LeftUpperLeg",
+	"LeftLowerLeg",
+	"LeftFoot",
+	"UpperTorso",
+	"LowerTorso",
+	"Head",
+	"ModelHitbox"
+} do
+	v_u_36[v39] = true
+end
+function removeFromTableBackwards(p40, p41)
+	while true do
+		local v42 = table.find(p40, p41)
+		if v42 then
+			table.remove(p40, v42)
+		end
+		if not v42 then
+			return
+		end
+	end
+end
+function v_u_9.GetHitDetectionParams(_)
+	-- upvalues: (ref) v_u_37, (ref) v_u_38, (copy) v_u_12, (copy) v_u_11
+	if v_u_37 then
+		return v_u_38
+	end
+	v_u_38 = OverlapParams.new()
+	v_u_38.FilterType = Enum.RaycastFilterType.Include
+	v_u_38.FilterDescendantsInstances = { v_u_12, v_u_11 }
+	v_u_37 = true
+	return v_u_38
+end
+local v_u_43 = {}
+function v_u_9.ToggleLoadMovesetAnims(_, p44, p45, p46)
+	-- upvalues: (copy) v_u_9, (copy) v_u_43, (ref) v_u_35
+	for v47, v48 in p45.WeaponType == "Gun" and p45.Moveset or p45.Moveset.Basic do
+		local v49
+		if p45.Moveset.Basic then
+			v49 = v_u_9:GetPureWeaponName(p45.Name) .. "-basic" .. v47
+		else
+			v49 = v_u_9:GetPureWeaponName(p45.Name) .. "-" .. v47
+		end
+		if p46 then
+			if not v_u_43[p44] then
+				v_u_43[p44] = {}
+			end
+			local v50 = v48.Looped
+			local v51 = v_u_35.Anims:Get(p44.Parent, v48.AnimationId)
 			if v51 then
-				v51 = v_u_29(v_u_20(v50), "stack overflow") ~= nil
+				v51._Object.Name = v49
+				if string.match(v49, "Idle") then
+					v51._Object.Looped = true
+				else
+					v51._Object.Looped = v50
+					v51._Object.Priority = Enum.AnimationPriority.Action
+					v51._Object:SetAttribute("SpeedMult", v48.SpeedMult)
+				end
+				v_u_43[p44][v49] = v51
 			end
-			return v51
-		end)
-		v46 = v52 and v53 and v53 or true
-	else
-		v46 = true
-	end
-	v43.stackOverflow = v46
-	if v43.stackOverflow then
-		v_u_9.stackOverflow = 0
-	else
-		local v54 = v_u_9
-		v54.stackOverflow = v54.stackOverflow + 1
-	end
-	local v55 = v_u_15
-	local v56
-	if v55 then
-		local v57
-		v56, v57 = v_u_15(v_u_21, v55, "n")
-		if v56 then
-			v56 = v57 ~= nil
-		end
-	else
-		v56 = true
-	end
-	if v56 then
-		local v58 = v_u_17
-		if v58 then
-			local v59
-			v56, v59 = v_u_15(v_u_21, v58, "n")
-			if v56 then
-				v56 = v59 ~= nil
+		elseif v_u_43[p44] then
+			local v52 = v_u_43[p44][v49]
+			if v52 then
+				v52:Stop()
+				if typeof(v52) == "Instance" then
+					v52:Destroy()
+				else
+					v52.Animation:Destroy()
+				end
 			end
-		else
-			v56 = true
+			v_u_43[p44][v49] = nil
+			if not next(v_u_43[p44]) then
+				v_u_43[p44] = nil
+			end
 		end
 	end
-	v43.debugInfo = v56
-	if v43.debugInfo then
-		v_u_9.debugInfo = 0
-	else
-		local v60 = v_u_9
-		v60.debugInfo = v60.debugInfo + 1
-	end
-	local v61, v62 = v_u_15(function()
-		-- upvalues: (ref) v_u_14, (ref) v_u_17
-		return v_u_17((v_u_14(game))) == "table"
-	end)
-	v43.metatables = v61 and (v62 or true) or v61
-	if v43.metatables then
-		v_u_9.metatables = 0
-	else
-		local v63 = v_u_9
-		v63.metatables = v63.metatables + 1
-	end
-	local v67, v68 = v_u_15(function()
-		-- upvalues: (ref) v_u_31, (ref) v_u_20
-		local v64 = v_u_31(1000000, 9999999)
-		local v65 = Instance.new("Folder")
-		v65.Name = v_u_20(v64)
-		local v66 = v65.Name
-		v65:Destroy()
-		return v66 == v_u_20(v64)
-	end)
-	v43.namecall = v67 and v68
-	if v43.namecall then
-		v_u_9.namecall = 0
-	else
-		local v69 = v_u_9
-		v69.namecall = v69.namecall + 1
-	end
-	local v71, v72 = v_u_15(function()
-		-- upvalues: (ref) v_u_31
-		local v70 = v_u_31(1000000, 9999999)
-		return v70 == v70
-	end)
-	v43.closures = v71 and v72
-	if v43.closures then
-		v_u_9.closures = 0
-	else
-		local v73 = v_u_9
-		v73.closures = v73.closures + 1
-	end
-	local v76, v77 = v_u_15(function()
-		-- upvalues: (ref) v_u_13
-		local v74 = { 1, 2, 3 }
-		local v75
-		if v_u_13(v74, 1) == 1 then
-			v75 = v74[2] == 2
-		else
-			v75 = false
+end
+function v_u_9.GetMovesetAnimCache(_, p53)
+	-- upvalues: (copy) v_u_43
+	return v_u_43[p53]
+end
+function v_u_9.GetLoadedAnimsFor(_, p54, p55)
+	-- upvalues: (copy) v_u_9
+	local v56 = v_u_9:GetPureWeaponName(p54)
+	local v57 = {}
+	local v58 = v_u_9:GetMovesetAnimCache(p55)
+	if v58 then
+		for v59, v60 in v58 do
+			local v61, v62 = string.match(v59, "(.+)-(.+)")
+			if v61 == v56 then
+				v57[v62] = v60
+			end
 		end
-		return v75
-	end)
-	v43.tableIntegrity = v76 and v77
-	if v43.tableIntegrity then
-		v_u_9.tableIntegrity = 0
-	else
-		local v78 = v_u_9
-		v78.tableIntegrity = v78.tableIntegrity + 1
 	end
-	local v79 = false
-	for _, v80 in v_u_18(v_u_9) do
-		if v80 >= 3 then
-			v79 = true
+	return v57
+end
+function v_u_9.AttackStart(_, p63, p_u_64)
+	-- upvalues: (copy) v_u_9, (copy) v_u_11, (copy) v_u_10, (ref) v_u_35
+	if p63 and p63.Parent then
+		local v_u_65 = p63.Parent:FindFirstChild("Humanoid")
+		local v_u_66
+		if v_u_65 then
+			v_u_66 = v_u_65.RootPart
+		else
+			v_u_66 = v_u_65
+		end
+		local v_u_67
+		if v_u_66 then
+			v_u_67 = v_u_66.Parent
+		else
+			v_u_67 = v_u_66
+		end
+		if v_u_67 then
+			local v_u_68 = require(game.ReplicatedStorage.Effect)
+			local v_u_69 = v_u_67:FindFirstChild("EquippedWeapon")
+			local v70 = v_u_9:GetWeaponName(v_u_69 or p63)
+			local v_u_71 = v_u_9:GetPureWeaponName(v70)
+			local v_u_72 = v_u_9:GetWeaponData(v70)
+			local v73 = v_u_72.Moveset
+			local v74 = v73.Basic
+			local v75 = ("Couldn\'t find the \'Basic\' moveset for %*"):format(v70)
+			assert(v74, v75)
+			local v_u_76 = v73.Basic[p_u_64]
+			local v77 = v_u_72.VFXDelay or v_u_76.VFXDelay
+			local v78 = v_u_67:IsDescendantOf(v_u_11)
+			if v_u_69 then
+				for _, v_u_79 in v_u_69:GetDescendants() do
+					if v_u_79:IsA("Trail") and v_u_71 ~= "dragontalon" then
+						v_u_79.Enabled = true
+					elseif v_u_79.Name == "HitEffect" and v_u_79:IsA("ParticleEmitter") then
+						task.delay(v77 or 0.25, function()
+							-- upvalues: (copy) v_u_79
+							v_u_79:Emit(v_u_79:GetAttribute("EmitCount") or 1)
+						end)
+					end
+				end
+				local v80 = v_u_10
+				if v80 then
+					v80 = v_u_67 ~= v_u_10.Character
+				end
+				if v78 or v80 then
+					task.delay(0.75, function()
+						-- upvalues: (copy) v_u_69
+						for _, v81 in v_u_69:GetDescendants() do
+							if v81:IsA("Trail") then
+								v81.Enabled = false
+							end
+						end
+					end)
+				end
+			end
+			if v_u_71 == "superhuman" or v_u_71 == "godhuman" then
+				task.delay(0.25, function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_67, (copy) v_u_71
+					v_u_68.new("Chop.Punch"):play({
+						["Character"] = v_u_67,
+						["God"] = v_u_71 == "godhuman"
+					})
+				end)
+			elseif v_u_71 == "divineart" then
+				task.defer(function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_66, (copy) p_u_64
+					local v82 = {
+						["hrp"] = v_u_66,
+						["index"] = p_u_64
+					}
+					v_u_68.new("Angel.M1"):play(v82)
+				end)
+			elseif v_u_71 == "flail" then
+				task.delay(0.3, function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_67
+					local v83 = {
+						["Character"] = v_u_67,
+						["God"] = true
+					}
+					v_u_68.new("Chop.Punch"):play(v83)
+				end)
+			elseif v_u_71 == "dragontalon" then
+				task.defer(function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_66, (copy) p_u_64
+					task.delay(0.25, function()
+						-- upvalues: (ref) v_u_68, (ref) v_u_66, (ref) p_u_64
+						local v84 = {
+							["Root"] = v_u_66,
+							["Index"] = p_u_64
+						}
+						v_u_68.new("DragonTalon.M1"):play(v84)
+					end)
+				end)
+			elseif v_u_71 == "sanguineart" then
+				task.defer(function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_66, (copy) p_u_64
+					local v85 = {
+						["Root"] = v_u_66,
+						["Combo"] = p_u_64
+					}
+					v_u_68.new("Ghoul.M1"):play(v85)
+				end)
+			elseif v_u_71 == "sharkmankarate" then
+				task.defer(function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_67, (copy) v_u_65, (copy) p_u_64
+					local v86 = {
+						["Character"] = v_u_67,
+						["Humanoid"] = v_u_65,
+						["Combo"] = p_u_64
+					}
+					v_u_68.new("Sharkman2.M1"):play(v86)
+				end)
+			elseif v_u_71 == "fishmankarate" then
+				task.defer(function()
+					-- upvalues: (copy) v_u_68, (copy) v_u_67, (copy) v_u_65, (copy) p_u_64
+					local v87 = {
+						["Character"] = v_u_67,
+						["Humanoid"] = v_u_65,
+						["Combo"] = p_u_64
+					}
+					v_u_68.new("WaterKungfu.M1"):play(v87)
+				end)
+			elseif v_u_71 == "anchor" then
+				task.defer(function()
+					-- upvalues: (copy) v_u_69, (copy) p_u_64, (ref) v_u_35, (copy) v_u_67, (ref) v_u_10
+					local v88 = Instance.new("Animation")
+					v88.AnimationId = "rbxassetid://14798724768"
+					local v89 = Instance.new("Animation")
+					v89.AnimationId = "rbxassetid://14798726082"
+					local v90 = Instance.new("Animation")
+					v90.AnimationId = "rbxassetid://14798728487"
+					local v91 = Instance.new("Animation")
+					v91.AnimationId = "rbxassetid://14798729807"
+					v_u_69.Right.Anchor.AnimationController:LoadAnimation(({
+						v88,
+						v89,
+						v90,
+						v91
+					})[p_u_64]):Play()
+					task.delay(0.2, function()
+						-- upvalues: (ref) v_u_35, (ref) v_u_67
+						v_u_35.Sound:Play("SwordSwing", v_u_67.HumanoidRootPart)
+					end)
+					if p_u_64 == 4 and v_u_67 == v_u_10.Character then
+						task.delay(0.2, function()
+							-- upvalues: (ref) v_u_35, (ref) v_u_67
+							v_u_35.BodyMover.new(v_u_67):Create("BodyVelocity", {
+								["Velocity"] = v_u_67.HumanoidRootPart.CFrame.lookVector * 100,
+								["Duration"] = 0.15
+							})
+						end)
+					end
+				end)
+			end
+			local v92 = v_u_76.PushDelay
+			local v_u_93 = v_u_76.PushForce
+			if v92 or v_u_93 then
+				task.delay(v92 or 0.2, function()
+					-- upvalues: (ref) v_u_35, (copy) v_u_67, (copy) v_u_66, (copy) v_u_93
+					v_u_35.BodyMover.new(v_u_67):Create("BodyVelocity", {
+						["Velocity"] = v_u_66.CFrame.LookVector * v_u_93,
+						["Duration"] = 0.15
+					})
+				end)
+			end
+			task.delay(v92 or 0.2, function()
+				-- upvalues: (ref) v_u_35, (copy) v_u_72, (copy) v_u_66
+				v_u_35.Sound:Play(v_u_72.SwingSound or "SwordSwing", v_u_66)
+			end)
+			local v94 = v_u_76.AOEDelay
+			local v_u_95 = v_u_76.AOEDistanceFromCharacter
+			if (v94 or v_u_95) and not v_u_76.CustomAOEVFX then
+				task.delay(v94 or v_u_9:GetDefaultAOEDelay(), function()
+					-- upvalues: (ref) v_u_35, (copy) v_u_66, (copy) v_u_95, (ref) v_u_11, (copy) v_u_76, (copy) v_u_68, (copy) v_u_67
+					local v96 = v_u_35.Ray
+					local v97 = v_u_66.CFrame
+					local v98 = -(v_u_95 or 7.5)
+					local v99, v100 = v96(v97 * Vector3.new(0, 0, v98), Vector3.new(0, -4, 0), { workspace.Characters, v_u_11 })
+					if v99 and not v_u_76.CustomAOEEffect then
+						local v101 = {
+							["Character"] = v_u_67,
+							["PreviousPosition"] = nil,
+							["Position"] = v100
+						}
+						v_u_68.new("Rubber.Transformed.Axe"):play(v101)
+					end
+				end)
+			end
+		end
+	else
+		return
+	end
+end
+function v_u_9.CanCharacterMeleeAoe(_, p102)
+	if p102 then
+		p102 = p102:FindFirstChild("HumanoidRootPart")
+	end
+	if p102 then
+		p102 = p102:FindFirstChild("Buddha")
+	end
+	return p102 and 10 or 1
+end
+local v_u_111 = coroutine.create(function()
+	-- upvalues: (copy) v_u_15
+	local v109, v110 = pcall(function()
+		-- upvalues: (ref) v_u_15
+		repeat
+			task.wait()
+		until v_u_15.RegisterHitEvent
+		local v103 = game.Players.LocalPlayer.UserId
+		local v104 = tostring(v103):sub(2, 4)
+		local v105 = coroutine.running
+		local v106 = v104 .. tostring(v105()):sub(11, 15)
+		v_u_15.RegisterHitEvent:FireServer(v106)
+		while true do
+			local v107, v108 = coroutine.yield()
+			v_u_15.RegisterHitEvent:FireServer(v107, v108, nil, v106)
+		end
+	end)
+	if not v109 then
+		warn(v110)
+	end
+end)
+if not v_u_14 then
+	function _G.checkHits() end
+	function _G.SendHitsToServer(...)
+		-- upvalues: (copy) v_u_111
+		_G.checkHits(...)
+		coroutine.resume(v_u_111, ...)
+	end
+	coroutine.resume(v_u_111)
+end
+local v_u_112 = {}
+local function v_u_121(p113, p114, p115, p116, p117)
+	-- upvalues: (copy) v_u_14, (copy) v_u_112, (copy) v_u_5, (copy) v_u_111, (copy) v_u_15, (copy) v_u_9
+	if v_u_14 then
+		require(game.ServerScriptService.Services.CombatService):RegisterHit(p113, p115)
+	else
+		if p117 then
+			for _, v118 in pairs(p117) do
+				local v119 = v_u_112
+				table.insert(v119, v118)
+			end
+			local v120 = v_u_112
+			table.insert(v120, { p114, p115 })
+		end
+		if p113 == true then
+			if #v_u_112 > 0 then
+				if v_u_5.COMBAT_REMOTE_THREAD then
+					coroutine.resume(v_u_111, table.remove(v_u_112, 1)[2], v_u_112)
+				else
+					v_u_15.RegisterHitEvent:FireServer(table.remove(v_u_112, 1)[2], v_u_112)
+				end
+			end
+			table.clear(v_u_112)
+		end
+		if p113 ~= true then
+			v_u_9:ApplyDamageHighlight(p114, p113, p116.Name, p116.WeaponType, p115)
+		end
+	end
+end
+function v_u_9.GetAttackAngle(_, p122, p123)
+	local v124 = p122.HumanoidRootPart.CFrame.LookVector:Dot((p123.HumanoidRootPart.Position - p122.HumanoidRootPart.Position).unit)
+	return math.acos(v124)
+end
+function v_u_9.RunHitDetection(_, p125, p126, p127)
+	-- upvalues: (copy) v_u_3, (copy) v_u_9, (copy) v_u_11, (copy) v_u_36, (copy) v_u_121, (copy) v_u_5, (copy) v_u_7, (copy) v_u_8, (ref) v_u_38, (copy) v_u_14, (copy) v_u_15
+	local v_u_128 = p125.Parent
+	local v_u_129 = v_u_3:GetPlayerFromCharacter(v_u_128)
+	local v_u_130 = v_u_128.HumanoidRootPart
+	local v131 = v_u_128.UpperTorso
+	local v132 = v_u_128.RightFoot
+	local v133 = v_u_128.Humanoid
+	local v134 = v_u_128:FindFirstChild("EquippedWeapon") or v_u_9:GetEquippedWeaponTool(v_u_128)
+	local v135 = v_u_9:GetWeaponName(v134)
+	local v_u_136 = v_u_9:GetWeaponData(v135)
+	local v137 = v_u_136.WeaponType == "Melee"
+	local v_u_138 = v134:IsDescendantOf(v_u_11)
+	if v_u_138 then
+		v_u_138 = not v_u_128:FindFirstChild("Summoner")
+	end
+	local v139 = v_u_128:FindFirstChild("Summoner")
+	local v140 = v_u_136.Moveset.Basic
+	local v141 = ("Couldn\'t find the \'Basic\' moveset for %*"):format(v135)
+	assert(v140, v141)
+	if v140[p126].AOEDelay ~= nil then
+		return
+	end
+	local v142 = {}
+	if v137 then
+		for _, v143 in v_u_128:GetChildren() do
+			if v143:HasTag("WeaponHitbox") or v143:HasTag("Blade") then
+				table.insert(v142, v143)
+			end
+		end
+	end
+	for _, v144 in v134:GetDescendants() do
+		if v144:HasTag("WeaponHitbox") or v144:HasTag("Blade") then
+			table.insert(v142, v144)
+		end
+	end
+	local v_u_145 = {}
+	local v_u_146 = {}
+	local v_u_147 = v_u_9:CanCharacterMeleeAoe(v_u_128)
+	local function v158(p148)
+		-- upvalues: (ref) v_u_9, (ref) v_u_36, (copy) v_u_128, (copy) v_u_129, (copy) v_u_136, (copy) v_u_130, (copy) v_u_138, (copy) v_u_146, (copy) v_u_147, (copy) v_u_145, (ref) v_u_121
+		local v149 = nil
+		local v150 = nil
+		for _, v151 in p148 do
+			local v152 = v_u_9:GetRigOfHitPart(v151)
+			if v152 then
+				if v_u_36[v151.Name] then
+					local v153 = v152:FindFirstChild("Summoner")
+					local v154 = v_u_128:FindFirstChild("Summoner")
+					if (not v154 or v152 ~= v154.Value.Character) and (not v_u_129 or (not v153 or v153.Value ~= v_u_129)) then
+						if v_u_136.ValidateFrontHits then
+							local _ = v_u_130.CFrame.Position
+							local _ = v152.PrimaryPart.CFrame.Position
+							if v_u_9:GetAttackAngle(v_u_128, v152) <= 1.3 then
+								goto l12
+							end
+						else
+							::l12::
+							if (not v_u_138 or (not v152:IsDescendantOf(workspace.Enemies) or (v154 or v153))) and (v152 ~= v_u_128 and v_u_9:IsVulnerable(v152)) then
+								if v149 then
+									if v_u_147 > #v_u_146 and (v151.Parent ~= v149 and not table.find(v_u_146, v151.Parent)) then
+										local v155 = v_u_145
+										table.insert(v155, { v152, v151 })
+										local v156 = v_u_146
+										table.insert(v156, v152)
+									end
+								else
+									local v157 = v_u_146
+									table.insert(v157, v152)
+									v150 = v151
+									v149 = v152
+								end
+							end
+						end
+					end
+				end
+			else
+				warn("No rig found for hit part:", v151)
+			end
+		end
+		if v149 then
+			v_u_121(v_u_128, v149, v150, v_u_136, v_u_145)
+		end
+		return v149, v150
+	end
+	local v_u_159 = nil
+	local v_u_160
+	if v_u_5.NEW_COMBAT_SYSTEM_VISUALIZE_HITBOXES then
+		v_u_160 = Instance.new("Part")
+		v_u_160.Name = "BroadphaseHitboxPart"
+		v_u_160.BrickColor = BrickColor.new("Bright red")
+		v_u_160.Transparency = 0.8
+		v_u_160.CanCollide = false
+		v_u_160.CanTouch = false
+		v_u_160.CanQuery = false
+		v_u_160.Anchored = true
+		v_u_160.Parent = workspace
+	else
+		v_u_160 = nil
+	end
+	local v161 = v_u_128.HumanoidRootPart:FindFirstChild("Buddha2")
+	local v162 = (v161 or v_u_128.HumanoidRootPart:FindFirstChild("Buddha")) and true or false
+	local v163 = v_u_130.Size.Y * 0.5 + v133.HipHeight + 0.5
+	local v164 = p127._Object.Length
+	local v165 = 0
+	local v166 = nil
+	local v167 = {}
+	while v165 < v164 and (p127._Object.IsPlaying and not v166) do
+		v165 = v165 + task.wait()
+		if v134 and not v134:IsDescendantOf(workspace) then
 			break
 		end
-	end
-	return not v79, v43, v_u_9
-end
-function v_u_1.new(p82)
-	-- upvalues: (copy) v_u_1
-	local v83 = v_u_1
-	local v84 = setmetatable({}, v83)
-	v84.Player = p82
-	return v84
-end
-function v_u_1.StartMonitoring(p85)
-	-- upvalues: (copy) v_u_17, (copy) v_u_15, (copy) v_u_27, (copy) v_u_28, (copy) v_u_25, (copy) v_u_33, (copy) v_u_22, (copy) v_u_23, (ref) v_u_40, (copy) v_u_7, (copy) v_u_9, (copy) v_u_8, (copy) v_u_14, (copy) v_u_13, (copy) v_u_31, (copy) v_u_20, (ref) v_u_34, (copy) v_u_81, (copy) v_u_1, (copy) v_u_30, (copy) v_u_32, (copy) v_u_11, (copy) v_u_19, (copy) v_u_29, (copy) v_u_2, (copy) v_u_3, (copy) v_u_4, (copy) v_u_18
-	local v_u_86 = p85.Player
-	if not v_u_86:GetAttribute("Staff") then
-		local v_u_87 = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Hello")
-		local v_u_88 = nil
-		local v_u_89 = false
-		v_u_87.OnClientEvent:Connect(function(p90)
-			-- upvalues: (ref) v_u_17, (ref) v_u_88, (ref) v_u_89
-			if p90 and (v_u_17(p90) == "table" and p90.k) then
-				v_u_88 = ("Got a silver knuckle blade and a gold one").reverse(p90.k)
-				v_u_89 = true
-			end
-		end)
-		local v_u_91 = 0
-		local v_u_92 = v_u_33()
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_9
-			while v_u_23(2) do
-				local v96, v97 = v_u_15(function()
-					-- upvalues: (ref) v_u_40, (ref) v_u_15, (ref) v_u_7
-					if not v_u_40() then
-						return false
-					end
-					local v94, v95 = v_u_15(function()
-						-- upvalues: (ref) v_u_7
-						local v93
-						if v_u_7[1] == "RenderStepped" and (v_u_7[2] == "HumanoidRootPart" and (v_u_7[3] == "Humanoid" and (v_u_7[4] == 16379 and v_u_7[5] == game))) then
-							v93 = v_u_7[6] == workspace
-						else
-							v93 = false
-						end
-						return v93
-					end)
-					return v94 and v95 and true or false
-				end)
-				if v96 and v97 then
-					v_u_9.constants = 0
-				else
-					local v98 = v_u_9
-					v98.constants = v98.constants + 1
-					if v_u_9.constants >= 3 then
-						v_u_9.constants = 0
+		if v165 >= 0.13 then
+			local v168 = v_u_130.CFrame
+			local v169 = v168.Position
+			local v170 = v131.Size.X
+			local v171 = v168 * Vector3.new(v170, 0, 0)
+			local v172 = v165 / v164
+			local v173 = math.clamp(v172, 0, 1)
+			local _ = v173 * v163
+			local v174 = v132.Position
+			local v175 = v132.Size.Y * 0.5
+			local v176 = v174 - Vector3.new(0, v175, 0)
+			local v177 = v169.X
+			local v178 = v176.Y
+			local v179 = v169.Z
+			local v180 = v171:Lerp(Vector3.new(v177, v178, v179), v173)
+			local v181, v182 = v_u_7(v142)
+			local v183 = v_u_8({
+				["CFrame"] = v181,
+				["Size"] = v182
+			})
+			local v184 = { v171, v180, unpack(v183) }
+			for v185 = #v167, #v167 + 1 - 30, -1 do
+				local v186 = v167[v185]
+				if v186 then
+					for _, v187 in v186 do
+						local v188 = v168 * v187
+						table.insert(v184, v188)
 					end
 				end
 			end
-		end)
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_8, (ref) v_u_17, (ref) v_u_14, (ref) v_u_13, (ref) v_u_9
-			while v_u_23(10) do
-				local v112, v113 = v_u_15(function()
-					-- upvalues: (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_8, (ref) v_u_17, (ref) v_u_14, (ref) v_u_13
-					local v102, v103 = v_u_15(function()
-						-- upvalues: (ref) v_u_40, (ref) v_u_15, (ref) v_u_7
-						if not v_u_40() then
-							return false
+			local v189 = {}
+			for _, v190 in v183 do
+				table.insert(v189, v168:ToObjectSpace(v190))
+			end
+			table.insert(v167, v189)
+			local v191, v192 = v_u_7(v184)
+			local v193 = v191 * (v168 - v169)
+			local v194 = v_u_130:GetAttribute("CharacterSizeScaleNumber") or 1
+			local v195 = v192 * (1 / math.clamp(v194, 1, 999))
+			local v196
+			if v_u_138 then
+				v196 = not v139
+			else
+				v196 = v_u_138
+			end
+			if v196 then
+				v195 = v195 * 0.5
+			end
+			local v197 = v_u_130.Size * (v_u_130:GetAttribute("HrpSizeScale") or 1)
+			if v162 then
+				if v137 then
+					v195 = Vector3.new(10.625, 7.5, 10) * v197.Y / 2
+					local v198 = v_u_136.HitboxMagnitude
+					if v198 then
+						v195 = v195 * (1 + (v198 - 2) * 0.1)
+					end
+					if v161 then
+						v195 = v195 * Vector3.new(1, 1, 0.875)
+					end
+					v193 = v_u_130.CFrame * CFrame.new(0, -v195.Y * 0.125, -v195.Z / 3.25)
+				else
+					local v199 = v195.X
+					local v200 = v197.Y * 4
+					local v201 = v195.Y
+					local v202 = math.max(v200, v201)
+					local v203 = v195.Z
+					v195 = Vector3.new(v199, v202, v203)
+				end
+			end
+			if v_u_160 then
+				v_u_160.CFrame = v193
+				v_u_160.Size = v195
+			end
+			local v204 = workspace:GetPartBoundsInBox(v193, v195, v_u_38)
+			if v162 and v137 == false then
+				local v205 = Vector3.new(10.625, 7.5, 10) * v197.Y / 2
+				local v206 = v_u_136.HitboxMagnitude
+				if v206 then
+					v205 = v205 * (1 + (v206 - 2) * 0.1)
+				end
+				if v161 then
+					v205 = v205 * Vector3.new(1, 1, 0.875)
+				end
+				local v207 = v_u_130.CFrame * CFrame.new(0, -v205.Y * 0.125, -v205.Z / 3.25)
+				if v_u_5.NEW_COMBAT_SYSTEM_VISUALIZE_HITBOXES and not v_u_159 then
+					v_u_159 = Instance.new("Part")
+					v_u_159.Name = "BroadphaseHitboxPart"
+					v_u_159.BrickColor = BrickColor.new("Bright red")
+					v_u_159.Transparency = 0.8
+					v_u_159.CanCollide = false
+					v_u_159.CanTouch = false
+					v_u_159.CanQuery = false
+					v_u_159.Anchored = true
+					v_u_159.CFrame = v207
+					v_u_159.Size = v205
+					v_u_159.Parent = workspace
+				end
+				if v_u_159 then
+					v_u_159.CFrame = v207
+					v_u_159.Size = v205
+				end
+				for _, v208 in pairs(workspace:GetPartBoundsInBox(v207, v205, v_u_38)) do
+					table.insert(v204, v208)
+				end
+			end
+			local v209
+			v166, v209 = v158(v204)
+			if v166 then
+				local v210 = v_u_3:GetPlayerFromCharacter(v166)
+				if v_u_14 and v210 then
+					local v211 = v209.Position
+					for _, v212 in v_u_3:GetPlayers() do
+						local v213 = v212.Character
+						if v212 ~= v_u_129 and (v213 and (v213:GetPivot().Position - v211).Magnitude <= 300) then
+							v_u_15.ReceivedHit:FireClient(v210, v166, v213, v_u_136.Name, v_u_136.WeaponType, v209)
 						end
-						local v100, v101 = v_u_15(function()
-							-- upvalues: (ref) v_u_7
-							local v99
-							if v_u_7[1] == "RenderStepped" and (v_u_7[2] == "HumanoidRootPart" and (v_u_7[3] == "Humanoid" and (v_u_7[4] == 16379 and v_u_7[5] == game))) then
-								v99 = v_u_7[6] == workspace
-							else
-								v99 = false
-							end
-							return v99
+					end
+				end
+			end
+			if not v162 or v137 == false then
+				for _, v214 in v142 do
+					local v215 = v214.Size
+					local v216
+					if v196 then
+						v216 = v215 * 0.5
+					else
+						local v217 = v_u_136.HitboxMagnitude
+						if v217 then
+							v215 = v215 + Vector3.new(1, 1, 1) * v217
+						end
+						if v137 then
+							v215 = v215 + Vector3.new(2, 2, 2)
+						end
+						if v_u_128.HumanoidRootPart:FindFirstChild("Buddha2") then
+							v215 = v215 * 1.5
+						elseif v_u_128.HumanoidRootPart:FindFirstChild("Buddha") then
+							v215 = v215 * 1.2
+						end
+						local v218 = v215.X
+						local v219 = math.max(3, v218)
+						local v220 = v215.Y
+						local v221 = math.max(3, v220)
+						local v222 = v215.Z
+						local v223 = math.max(3, v222)
+						v216 = Vector3.new(v219, v221, v223)
+					end
+					if v_u_5.NEW_COMBAT_SYSTEM_VISUALIZE_HITBOXES then
+						local v_u_224 = Instance.new("Part")
+						v_u_224.BrickColor = BrickColor.new("Bright red")
+						v_u_224.Transparency = 0.5
+						v_u_224.CanCollide = false
+						v_u_224.CanTouch = false
+						v_u_224.CanQuery = false
+						v_u_224.Anchored = true
+						v_u_224.CFrame = v214.CFrame
+						v_u_224.Size = v216
+						v_u_224.Parent = workspace
+						task.delay(0, function()
+							-- upvalues: (copy) v_u_224
+							v_u_224:Destroy()
 						end)
-						return v100 and v101 and true or false
-					end)
-					if not (v102 and v103) then
-						return false
 					end
-					local v105, v106 = v_u_15(function()
-						-- upvalues: (ref) v_u_8, (ref) v_u_15, (ref) v_u_17, (ref) v_u_14
-						local v104
-						if v_u_8.game == game and (v_u_8.workspace == workspace and v_u_17(v_u_15) == "function") then
-							v104 = v_u_17(v_u_14) == "function"
-						else
-							v104 = false
-						end
-						return v104
-					end)
-					if not (v105 and v106) then
-						return false
-					end
-					local v107, _ = v_u_15(function()
-						-- upvalues: (ref) v_u_14, (ref) v_u_17
-						return v_u_17((v_u_14(game))) == "table"
-					end)
-					if not (v107 or v107) then
-						return false
-					end
-					local v110, v111 = v_u_15(function()
-						-- upvalues: (ref) v_u_13
-						local v108 = { 1, 2, 3 }
-						local v109
-						if v_u_13(v108, 1) == 1 then
-							v109 = v108[2] == 2
-						else
-							v109 = false
-						end
-						return v109
-					end)
-					return v110 and v111 and true or false
-				end)
-				if v112 and v113 then
-					v_u_9.environment = 0
-				else
-					local v114 = v_u_9
-					v114.environment = v114.environment + 1
-					if v_u_9.environment >= 3 then
-						v_u_9.environment = 0
-					end
-				end
-			end
-		end)
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_8, (ref) v_u_17, (ref) v_u_14, (ref) v_u_13, (ref) v_u_31, (ref) v_u_20, (ref) v_u_34
-			while v_u_23(30) do
-				local v138, v139 = v_u_15(function()
-					-- upvalues: (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_8, (ref) v_u_17, (ref) v_u_14, (ref) v_u_13, (ref) v_u_31, (ref) v_u_20, (ref) v_u_34
-					local v128, v129 = v_u_15(function()
-						-- upvalues: (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_8, (ref) v_u_17, (ref) v_u_14, (ref) v_u_13
-						local v118, v119 = v_u_15(function()
-							-- upvalues: (ref) v_u_40, (ref) v_u_15, (ref) v_u_7
-							if not v_u_40() then
-								return false
-							end
-							local v116, v117 = v_u_15(function()
-								-- upvalues: (ref) v_u_7
-								local v115
-								if v_u_7[1] == "RenderStepped" and (v_u_7[2] == "HumanoidRootPart" and (v_u_7[3] == "Humanoid" and (v_u_7[4] == 16379 and v_u_7[5] == game))) then
-									v115 = v_u_7[6] == workspace
-								else
-									v115 = false
+					local v225
+					v166, v225 = v158((workspace:GetPartBoundsInBox(v214.CFrame, v216, v_u_38)))
+					if v166 then
+						local v226 = v_u_3:GetPlayerFromCharacter(v166)
+						if v_u_14 and v226 then
+							local v227 = v225.Position
+							for _, v228 in v_u_3:GetPlayers() do
+								local v229 = v228.Character
+								if v228 ~= v_u_129 and (v229 and (v229:GetPivot().Position - v227).Magnitude <= 300) then
+									v_u_15.ReceivedHit:FireClient(v226, v166, v229, v_u_136.Name, v_u_136.WeaponType, v225)
 								end
-								return v115
-							end)
-							return v116 and v117 and true or false
-						end)
-						if not (v118 and v119) then
-							return false
-						end
-						local v121, v122 = v_u_15(function()
-							-- upvalues: (ref) v_u_8, (ref) v_u_15, (ref) v_u_17, (ref) v_u_14
-							local v120
-							if v_u_8.game == game and (v_u_8.workspace == workspace and v_u_17(v_u_15) == "function") then
-								v120 = v_u_17(v_u_14) == "function"
-							else
-								v120 = false
 							end
-							return v120
-						end)
-						if not (v121 and v122) then
-							return false
 						end
-						local v123, _ = v_u_15(function()
-							-- upvalues: (ref) v_u_14, (ref) v_u_17
-							return v_u_17((v_u_14(game))) == "table"
-						end)
-						if not (v123 or v123) then
-							return false
-						end
-						local v126, v127 = v_u_15(function()
-							-- upvalues: (ref) v_u_13
-							local v124 = { 1, 2, 3 }
-							local v125
-							if v_u_13(v124, 1) == 1 then
-								v125 = v124[2] == 2
-							else
-								v125 = false
-							end
-							return v125
-						end)
-						return v126 and v127 and true or false
-					end)
-					if not (v128 and v129) then
-						return false
-					end
-					local v133, v134 = v_u_15(function()
-						-- upvalues: (ref) v_u_31, (ref) v_u_20
-						local v130 = v_u_31(1000000, 9999999)
-						local v131 = Instance.new("Folder")
-						v131.Name = v_u_20(v130)
-						local v132 = v131.Name
-						v131:Destroy()
-						return v132 == v_u_20(v130)
-					end)
-					if not (v133 and v134) then
-						return false
-					end
-					local v136, v137 = v_u_15(function()
-						-- upvalues: (ref) v_u_31
-						local v135 = v_u_31(1000000, 9999999)
-						return v135 == v135
-					end)
-					return v136 and v137 and true or false
-				end)
-				if not (v138 and v139) then
-					while true do
-
+						break
 					end
 				end
-			end
-		end)
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_81, (ref) v_u_15
-			while v_u_23(15) do
-				local v140, v_u_141, v_u_142 = v_u_81()
-				if not v140 then
-					local v_u_143 = game:GetService("HttpService")
-					local _, _ = v_u_15(function()
-						-- upvalues: (copy) v_u_143, (copy) v_u_141, (copy) v_u_142
-						return v_u_143:JSONEncode({
-							["results"] = v_u_141,
-							["counts"] = v_u_142
-						})
-					end)
-				end
-			end
-		end)
-		local v_u_144 = 0
-		game:GetService("ReplicatedStorage").Events.retrieveClientInfo.OnClientInvoke = function(p145)
-			if p145 == "ClientFPS" then
-				return 1 / game:GetService("RunService").RenderStepped:Wait()
 			end
 		end
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_144, (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_9, (ref) v_u_1, (ref) v_u_89, (ref) v_u_88, (ref) v_u_91, (ref) v_u_30, (ref) v_u_33, (ref) v_u_32, (ref) v_u_27, (ref) v_u_28, (ref) v_u_25, (copy) v_u_87, (ref) v_u_92
-			while v_u_23(1) do
-				v_u_144 = v_u_144 + 1
-				if v_u_144 % 10 == 0 then
-					local v149, v150 = v_u_15(function()
-						-- upvalues: (ref) v_u_40, (ref) v_u_15, (ref) v_u_7
-						if not v_u_40() then
-							return false
-						end
-						local v147, v148 = v_u_15(function()
-							-- upvalues: (ref) v_u_7
-							local v146
-							if v_u_7[1] == "RenderStepped" and (v_u_7[2] == "HumanoidRootPart" and (v_u_7[3] == "Humanoid" and (v_u_7[4] == 16379 and v_u_7[5] == game))) then
-								v146 = v_u_7[6] == workspace
-							else
-								v146 = false
-							end
-							return v146
-						end)
-						return v147 and v148 and true or false
-					end)
-					if not (v149 and v150) then
-						local v151 = v_u_9
-						v151.constants = v151.constants + 1
-						if v_u_9.constants >= 3 then
-							v_u_1.__index = v_u_1
-							local v_u_152 = game:GetService("Players")
-							local v_u_153 = game:GetService("RunService")
-							game:GetService("Stats")
-							local v_u_154 = workspace.Gravity
-							local v_u_155 = script.Parent
-							local v_u_156 = {
-								["avgFPS"] = 60,
-								["avgPing"] = 0,
-								["deviceType"] = "Unknown",
-								["lastLagSpike"] = 0,
-								["consecutiveLowFPS"] = 0
-							}
-							local v_u_157 = {
-								["characterSpawn"] = 5,
-								["sessionStart"] = 10,
-								["lagRecovery"] = 3
-							}
-							local v_u_158 = {
-								["characterSpawnTime"] = 0,
-								["sessionStartTime"] = 0,
-								["lastLagSpikeTime"] = 0,
-								["inGracePeriod"] = true
-							}
-							local v_u_159 = {
-								"ADONIS_",
-								"KOHL_",
-								"HD_ADMIN_",
-								"CMDR_",
-								"NANOBLOX_"
-							}
-							local v_u_160 = {}
-							local v161 = {}
-							local v_u_162 = {}
-							local v_u_163 = {}
-							local v_u_164 = {
-								["stackOverflow"] = 0,
-								["debugInfo"] = 0,
-								["functionSource"] = 0,
-								["metatables"] = 0,
-								["namecall"] = 0,
-								["closures"] = 0,
-								["environment"] = 0,
-								["constants"] = 0,
-								["stateDesync"] = 0
-							}
-							local v_u_165 = {}
-							local v_u_166 = {
-								["enableStackOverflow"] = true,
-								["enableDebugInfo"] = true,
-								["stackDepth"] = 16379,
-								["minFPSForFullValidation"] = 30,
-								["maxPingForFullValidation"] = 300
-							}
-							local v167 = game:GetService("ReplicatedFirst"):GetChildren()
-							local v_u_168 = v167[math.random(1, #v167)];
-							(function()
-								-- upvalues: (copy) v_u_160
-								for v169 = 1, 5 do
-									v_u_160[v169] = math.random(1000000, 9999999)
-								end
-							end)()
-							local v_u_170 = rawget
-							local _ = rawset
-							local v_u_171 = getmetatable
-							local _ = setmetatable
-							local v_u_172 = pcall
-							local v_u_173 = xpcall
-							local v_u_174 = type
-							local _ = next
-							local v_u_175 = pairs
-							local v_u_176 = ipairs
-							local v_u_177 = tostring
-							local _ = tonumber
-							local v_u_178 = debug.info
-							local _ = debug.traceback
-							local v_u_179 = task.spawn
-							local v_u_180 = task.wait
-							local v_u_181 = task.delay
-							local _ = table.insert
-							local v_u_182 = table.concat
-							local v183 = table.clone
-							local v_u_184 = ("Got a silver knuckle blade and a gold one").byte
-							local v_u_185 = ("Got a silver knuckle blade and a gold one").char
-							local v_u_186 = ("Got a silver knuckle blade and a gold one").find
-							local v_u_187 = ("Got a silver knuckle blade and a gold one").format
-							local v_u_188 = math.random
-							local v_u_189 = math.floor
-							local v_u_190 = os.clock
-							v161.pcall = v_u_172
-							v161.xpcall = v_u_173
-							v161.type = v_u_174
-							v161.getmetatable = v_u_171
-							v161.debug_info = v_u_178
-							local function v_u_196()
-								-- upvalues: (copy) v_u_172, (copy) v_u_153, (copy) v_u_156, (copy) v_u_190, (copy) v_u_158, (copy) v_u_152
-								local v191, v192 = v_u_172(function()
-									-- upvalues: (ref) v_u_153
-									return 1 / v_u_153.RenderStepped:Wait()
-								end)
-								if v191 and v192 then
-									v_u_156.avgFPS = v_u_156.avgFPS * 0.9 + v192 * 0.1
-									if v192 < 20 then
-										local v193 = v_u_156
-										v193.consecutiveLowFPS = v193.consecutiveLowFPS + 1
-									else
-										v_u_156.consecutiveLowFPS = 0
-									end
-									if v192 < 15 then
-										v_u_156.lastLagSpike = v_u_190()
-										v_u_158.lastLagSpikeTime = v_u_190()
-									end
-								end
-								local v194, v195 = v_u_172(function()
-									-- upvalues: (ref) v_u_152
-									return v_u_152.LocalPlayer:GetNetworkPing() * 1000
-								end)
-								if v194 and v195 then
-									v_u_156.avgPing = v_u_156.avgPing * 0.9 + v195 * 0.1
-								end
-							end
-							local function v_u_200()
-								-- upvalues: (copy) v_u_190, (copy) v_u_175, (copy) v_u_164, (copy) v_u_165, (copy) v_u_189
-								local v197 = v_u_190()
-								for v198, v199 in v_u_175(v_u_164) do
-									if v199 > 0 and (v_u_165[v198] and v197 - v_u_165[v198] > 30) then
-										v_u_164[v198] = v_u_189(v199 * 0.5)
-										v_u_165[v198] = v197
-									end
-								end
-							end
-							v_u_162[1] = "RenderStepped"
-							v_u_162[2] = "HumanoidRootPart"
-							v_u_162[3] = "Humanoid"
-							v_u_162[4] = 16379
-							v_u_162[5] = game
-							v_u_162[6] = workspace
-							v_u_163.game = game
-							v_u_163.workspace = workspace
-							v_u_163.pcall_type = v_u_174(v_u_172)
-							v_u_163.getmetatable_type = v_u_174(v_u_171)
-							local function v_u_212(p_u_201)
-								-- upvalues: (copy) v_u_166, (copy) v_u_190, (copy) v_u_158, (copy) v_u_157, (copy) v_u_156, (copy) v_u_172, (copy) v_u_186, (copy) v_u_177
-								if not p_u_201 then
-									return true
-								end
-								if v_u_166.enableStackOverflow then
-									local v202 = v_u_190()
-									if v202 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v202 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v202 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-										local v203 = v_u_166.stackDepth
-										local v_u_204 = v_u_156.avgFPS < 30 and 8000 or v203
-										local v210, v211 = v_u_172(function()
-											-- upvalues: (ref) v_u_204, (copy) p_u_201, (ref) v_u_172, (ref) v_u_186, (ref) v_u_177
-											local function v_u_206(p205)
-												-- upvalues: (ref) v_u_204, (ref) v_u_206, (ref) p_u_201
-												if p205 < v_u_204 then
-													return v_u_206(p205 + 1)
-												else
-													return p_u_201(workspace, "Name")
-												end
-											end
-											local v207, v208 = v_u_172(v_u_206, 1)
-											local v209 = not v207
-											if v209 then
-												v209 = v_u_186(v_u_177(v208), "stack overflow") ~= nil
-											end
-											return v209
-										end)
-										return v210 and v211 and v211 or true
-									end
-								end
-								return true
-							end
-							local v_u_213 = true
-							v_u_172(function()
-								-- upvalues: (copy) v_u_171, (ref) v_u_213
-								v_u_171((newproxy(true))).__gc = function()
-									-- upvalues: (ref) v_u_213
-									v_u_213 = false
-								end
-							end)
-							local v_u_214 = v183(v_u_160)
-							local function v_u_217()
-								-- upvalues: (copy) v_u_176, (copy) v_u_160, (copy) v_u_214
-								for v215, v216 in v_u_176(v_u_160) do
-									if v216 ~= v_u_214[v215] then
-										return false
-									end
-								end
-								return true
-							end
-							local function v_u_219()
-								-- upvalues: (copy) v_u_217
-								local v218 = v_u_217
-								if v218 then
-									v218 = v_u_217()
-								end
-								return v218
-							end
-							v_u_181(2.31, function()
-								-- upvalues: (ref) v_u_219
-								local v_u_220 = v_u_219
-								v_u_219 = function()
-									-- upvalues: (copy) v_u_220
-									local v221 = v_u_220
-									if v221 then
-										v221 = v_u_220()
-									end
-									return v221
-								end
-							end)
-							local function v_u_257()
-								-- upvalues: (copy) v_u_190, (copy) v_u_158, (copy) v_u_157, (copy) v_u_156, (copy) v_u_164, (copy) v_u_173, (copy) v_u_178, (copy) v_u_212, (copy) v_u_165, (copy) v_u_172, (copy) v_u_166, (copy) v_u_174, (copy) v_u_171, (copy) v_u_188, (copy) v_u_177, (copy) v_u_170, (copy) v_u_175
-								local v222 = v_u_190()
-								if (v222 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v222 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v222 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-									return true, {}, v_u_164
-								end
-								local v223 = {
-									["stackOverflow"] = true,
-									["debugInfo"] = true,
-									["metatables"] = true,
-									["namecall"] = true,
-									["closures"] = true,
-									["tableIntegrity"] = true
-								}
-								local v_u_224 = nil
-								v_u_173(function()
-									return game.AAAAAAA
-								end, function()
-									-- upvalues: (ref) v_u_224, (ref) v_u_178
-									v_u_224 = v_u_178(2, "f")
-								end)
-								v223.stackOverflow = v_u_212(v_u_224)
-								if v223.stackOverflow then
-									v_u_164.stackOverflow = 0
-									v_u_165.stackOverflow = nil
-								else
-									v_u_164.stackOverflow = v_u_164.stackOverflow + 1
-									v_u_165.stackOverflow = v_u_190()
-								end
-								local v225 = v_u_172
-								local v226
-								if v225 and v_u_166.enableDebugInfo then
-									local v227 = v_u_190()
-									if (v227 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v227 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v227 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-										v226 = true
-									else
-										local v228
-										v226, v228 = v_u_172(v_u_178, v225, "n")
-										if v226 then
-											v226 = v228 ~= nil
-										end
-									end
-								else
-									v226 = true
-								end
-								if v226 then
-									local v229 = v_u_174
-									if v229 and v_u_166.enableDebugInfo then
-										local v230 = v_u_190()
-										if (v230 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v230 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v230 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-											v226 = true
-										else
-											local v231
-											v226, v231 = v_u_172(v_u_178, v229, "n")
-											if v226 then
-												v226 = v231 ~= nil
-											end
-										end
-									else
-										v226 = true
-									end
-								end
-								v223.debugInfo = v226
-								if v223.debugInfo then
-									v_u_164.debugInfo = 0
-									v_u_165.debugInfo = nil
-								else
-									v_u_164.debugInfo = v_u_164.debugInfo + 1
-									v_u_165.debugInfo = v_u_190()
-								end
-								local v232 = v_u_190()
-								local v233
-								if (v232 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v232 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v232 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-									v233 = true
-								else
-									local v234, v235 = v_u_172(function()
-										-- upvalues: (ref) v_u_171, (ref) v_u_174
-										return v_u_174((v_u_171(game))) == "table"
-									end)
-									v233 = v234 and (v235 or true) or v234
-								end
-								v223.metatables = v233
-								if v223.metatables then
-									v_u_164.metatables = 0
-									v_u_165.metatables = nil
-								else
-									v_u_164.metatables = v_u_164.metatables + 1
-									v_u_165.metatables = v_u_190()
-								end
-								local v236 = v_u_190()
-								local v237
-								if (v236 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v236 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v236 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-									v237 = true
-								else
-									local v241, v242 = v_u_172(function()
-										-- upvalues: (ref) v_u_188, (ref) v_u_177
-										local v238 = v_u_188(1000000, 9999999)
-										local v239 = Instance.new("Folder")
-										v239.Name = v_u_177(v238)
-										local v240 = v239.Name
-										v239:Destroy()
-										return v240 == v_u_177(v238)
-									end)
-									v237 = v241 and v242
-								end
-								v223.namecall = v237
-								if v223.namecall then
-									v_u_164.namecall = 0
-									v_u_165.namecall = nil
-								else
-									v_u_164.namecall = v_u_164.namecall + 1
-									v_u_165.namecall = v_u_190()
-								end
-								local v243 = v_u_190()
-								local v244
-								if (v243 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v243 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v243 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-									v244 = true
-								else
-									local v246, v247 = v_u_172(function()
-										-- upvalues: (ref) v_u_188
-										local v245 = v_u_188(1000000, 9999999)
-										return v245 == v245
-									end)
-									v244 = v246 and v247
-								end
-								v223.closures = v244
-								if v223.closures then
-									v_u_164.closures = 0
-									v_u_165.closures = nil
-								else
-									v_u_164.closures = v_u_164.closures + 1
-									v_u_165.closures = v_u_190()
-								end
-								local v248 = v_u_190()
-								local v249
-								if (v248 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v248 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v248 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-									v249 = true
-								else
-									local v252, v253 = v_u_172(function()
-										-- upvalues: (ref) v_u_170
-										local v250 = { 1, 2, 3 }
-										local v251
-										if v_u_170(v250, 1) == 1 then
-											v251 = v250[2] == 2
-										else
-											v251 = false
-										end
-										return v251
-									end)
-									v249 = v252 and v253
-								end
-								v223.tableIntegrity = v249
-								if v223.tableIntegrity then
-									v_u_164.tableIntegrity = 0
-									v_u_165.tableIntegrity = nil
-								else
-									v_u_164.tableIntegrity = v_u_164.tableIntegrity + 1
-									v_u_165.tableIntegrity = v_u_190()
-								end
-								local v254 = v_u_156.avgFPS < 30 and 8 or (v_u_156.avgPing > 200 and 8 or (v_u_156.deviceType == "Mobile" and 7 or 5))
-								local v255 = false
-								for _, v256 in v_u_175(v_u_164) do
-									if v254 <= v256 then
-										v255 = true
-										break
-									end
-								end
-								return not v255, v223, v_u_164
-							end
-							function v_u_1.new(p258)
-								-- upvalues: (ref) v_u_1
-								local v259 = v_u_1
-								local v260 = setmetatable({}, v259)
-								v260.Player = p258
-								return v260
-							end
-							function v_u_1.StartMonitoring(p261)
-								-- upvalues: (copy) v_u_158, (copy) v_u_190, (copy) v_u_172, (copy) v_u_156, (copy) v_u_174, (copy) v_u_184, (copy) v_u_185, (copy) v_u_182, (copy) v_u_179, (copy) v_u_180, (copy) v_u_196, (copy) v_u_200, (copy) v_u_157, (ref) v_u_219, (copy) v_u_162, (copy) v_u_164, (copy) v_u_165, (copy) v_u_163, (copy) v_u_171, (copy) v_u_170, (copy) v_u_188, (copy) v_u_177, (ref) v_u_213, (copy) v_u_257, (copy) v_u_187, (copy) v_u_189, (copy) v_u_168, (copy) v_u_176, (copy) v_u_159, (copy) v_u_186, (copy) v_u_181, (copy) v_u_153, (copy) v_u_154, (copy) v_u_155, (copy) v_u_175
-								local v_u_262 = p261.Player
-								v_u_158.sessionStartTime = v_u_190()
-								local v264, v265 = v_u_172(function()
-									local v263 = game:GetService("UserInputService")
-									return v263.TouchEnabled and not v263.KeyboardEnabled and "Mobile" or (v263.GamepadEnabled and "Console" or "PC")
-								end)
-								if v264 then
-									v_u_156.deviceType = v265
-								end
-								local v_u_266 = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Hello")
-								local v_u_267 = nil
-								local v_u_268 = false
-								v_u_266.OnClientEvent:Connect(function(p269)
-									-- upvalues: (ref) v_u_174, (ref) v_u_267, (ref) v_u_268
-									if p269 and (v_u_174(p269) == "table" and p269.k) then
-										v_u_267 = ("Got a silver knuckle blade and a gold one").reverse(p269.k)
-										v_u_268 = true
-									end
-								end)
-								local v_u_270 = 0
-								local v_u_271 = v_u_190()
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_196, (ref) v_u_200
-									while v_u_180(1) do
-										v_u_196()
-										v_u_200()
-									end
-								end)
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_164, (ref) v_u_165
-									while v_u_180(5) do
-										local v272 = v_u_190()
-										if v272 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v272 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v272 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-											local v273 = v_u_190()
-											local v274
-											if (v273 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v273 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v273 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-												v274 = true
-											else
-												local v278, v279 = v_u_172(function()
-													-- upvalues: (ref) v_u_219, (ref) v_u_172, (ref) v_u_162
-													if not v_u_219() then
-														return false
-													end
-													local v276, v277 = v_u_172(function()
-														-- upvalues: (ref) v_u_162
-														local v275
-														if v_u_162[1] == "RenderStepped" and (v_u_162[2] == "HumanoidRootPart" and (v_u_162[3] == "Humanoid" and (v_u_162[4] == 16379 and v_u_162[5] == game))) then
-															v275 = v_u_162[6] == workspace
-														else
-															v275 = false
-														end
-														return v275
-													end)
-													return v276 and v277 and true or false
-												end)
-												v274 = v278 and v279
-											end
-											if v274 then
-												v_u_164.constants = 0
-												v_u_165.constants = nil
-											else
-												v_u_164.constants = v_u_164.constants + 1
-												v_u_165.constants = v_u_190()
-												if (v_u_156.avgFPS < 30 and 8 or (v_u_156.avgPing > 200 and 8 or (v_u_156.deviceType == "Mobile" and 7 or 5))) <= v_u_164.constants then
-													v_u_164.constants = 0
-													v_u_165.constants = nil
-												end
-											end
-										end
-									end
-								end)
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_163, (ref) v_u_174, (ref) v_u_171, (ref) v_u_170, (ref) v_u_164, (ref) v_u_165
-									while v_u_180(15) do
-										local v280 = v_u_190()
-										if v280 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v280 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v280 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-											local v281 = v_u_190()
-											local v282
-											if (v281 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v281 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v281 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-												v282 = true
-											else
-												local v303, v304 = v_u_172(function()
-													-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_163, (ref) v_u_174, (ref) v_u_171, (ref) v_u_170
-													local v283 = v_u_190()
-													local v284
-													if (v283 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v283 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v283 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-														v284 = true
-													else
-														local v288, v289 = v_u_172(function()
-															-- upvalues: (ref) v_u_219, (ref) v_u_172, (ref) v_u_162
-															if not v_u_219() then
-																return false
-															end
-															local v286, v287 = v_u_172(function()
-																-- upvalues: (ref) v_u_162
-																local v285
-																if v_u_162[1] == "RenderStepped" and (v_u_162[2] == "HumanoidRootPart" and (v_u_162[3] == "Humanoid" and (v_u_162[4] == 16379 and v_u_162[5] == game))) then
-																	v285 = v_u_162[6] == workspace
-																else
-																	v285 = false
-																end
-																return v285
-															end)
-															return v286 and v287 and true or false
-														end)
-														v284 = v288 and v289
-													end
-													if not v284 then
-														return false
-													end
-													local v291, v292 = v_u_172(function()
-														-- upvalues: (ref) v_u_163, (ref) v_u_172, (ref) v_u_174, (ref) v_u_171
-														local v290
-														if v_u_163.game == game and (v_u_163.workspace == workspace and v_u_174(v_u_172) == "function") then
-															v290 = v_u_174(v_u_171) == "function"
-														else
-															v290 = false
-														end
-														return v290
-													end)
-													if not (v291 and v292) then
-														return false
-													end
-													local v293 = v_u_190()
-													local v294
-													if (v293 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v293 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v293 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-														v294 = true
-													else
-														local v295, v296 = v_u_172(function()
-															-- upvalues: (ref) v_u_171, (ref) v_u_174
-															return v_u_174((v_u_171(game))) == "table"
-														end)
-														v294 = v295 and (v296 or true) or v295
-													end
-													if not v294 then
-														return false
-													end
-													local v297 = v_u_190()
-													local v298
-													if (v297 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v297 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v297 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-														v298 = true
-													else
-														local v301, v302 = v_u_172(function()
-															-- upvalues: (ref) v_u_170
-															local v299 = { 1, 2, 3 }
-															local v300
-															if v_u_170(v299, 1) == 1 then
-																v300 = v299[2] == 2
-															else
-																v300 = false
-															end
-															return v300
-														end)
-														v298 = v301 and v302
-													end
-													return v298 and true or false
-												end)
-												v282 = v303 and v304
-											end
-											if v282 then
-												v_u_164.environment = 0
-												v_u_165.environment = nil
-											else
-												v_u_164.environment = v_u_164.environment + 1
-												v_u_165.environment = v_u_190()
-												if (v_u_156.avgFPS < 30 and 8 or (v_u_156.avgPing > 200 and 8 or (v_u_156.deviceType == "Mobile" and 7 or 5))) <= v_u_164.environment then
-													v_u_164.environment = 0
-													v_u_165.environment = nil
-												end
-											end
-										end
-									end
-								end)
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_163, (ref) v_u_174, (ref) v_u_171, (ref) v_u_170, (ref) v_u_188, (ref) v_u_177, (ref) v_u_213
-									while v_u_180(45) do
-										local v305 = v_u_190()
-										if v305 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v305 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v305 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-											local v306 = v_u_190()
-											local v307
-											if (v306 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v306 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v306 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-												v307 = true
-											else
-												local v344, v345 = v_u_172(function()
-													-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_163, (ref) v_u_174, (ref) v_u_171, (ref) v_u_170, (ref) v_u_188, (ref) v_u_177, (ref) v_u_213
-													local v308 = v_u_190()
-													local v309
-													if (v308 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v308 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v308 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-														v309 = true
-													else
-														local v330, v331 = v_u_172(function()
-															-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_163, (ref) v_u_174, (ref) v_u_171, (ref) v_u_170
-															local v310 = v_u_190()
-															local v311
-															if (v310 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v310 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v310 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-																v311 = true
-															else
-																local v315, v316 = v_u_172(function()
-																	-- upvalues: (ref) v_u_219, (ref) v_u_172, (ref) v_u_162
-																	if not v_u_219() then
-																		return false
-																	end
-																	local v313, v314 = v_u_172(function()
-																		-- upvalues: (ref) v_u_162
-																		local v312
-																		if v_u_162[1] == "RenderStepped" and (v_u_162[2] == "HumanoidRootPart" and (v_u_162[3] == "Humanoid" and (v_u_162[4] == 16379 and v_u_162[5] == game))) then
-																			v312 = v_u_162[6] == workspace
-																		else
-																			v312 = false
-																		end
-																		return v312
-																	end)
-																	return v313 and v314 and true or false
-																end)
-																v311 = v315 and v316
-															end
-															if not v311 then
-																return false
-															end
-															local v318, v319 = v_u_172(function()
-																-- upvalues: (ref) v_u_163, (ref) v_u_172, (ref) v_u_174, (ref) v_u_171
-																local v317
-																if v_u_163.game == game and (v_u_163.workspace == workspace and v_u_174(v_u_172) == "function") then
-																	v317 = v_u_174(v_u_171) == "function"
-																else
-																	v317 = false
-																end
-																return v317
-															end)
-															if not (v318 and v319) then
-																return false
-															end
-															local v320 = v_u_190()
-															local v321
-															if (v320 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v320 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v320 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-																v321 = true
-															else
-																local v322, v323 = v_u_172(function()
-																	-- upvalues: (ref) v_u_171, (ref) v_u_174
-																	return v_u_174((v_u_171(game))) == "table"
-																end)
-																v321 = v322 and (v323 or true) or v322
-															end
-															if not v321 then
-																return false
-															end
-															local v324 = v_u_190()
-															local v325
-															if (v324 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v324 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v324 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-																v325 = true
-															else
-																local v328, v329 = v_u_172(function()
-																	-- upvalues: (ref) v_u_170
-																	local v326 = { 1, 2, 3 }
-																	local v327
-																	if v_u_170(v326, 1) == 1 then
-																		v327 = v326[2] == 2
-																	else
-																		v327 = false
-																	end
-																	return v327
-																end)
-																v325 = v328 and v329
-															end
-															return v325 and true or false
-														end)
-														v309 = v330 and v331
-													end
-													if not v309 then
-														return false
-													end
-													local v332 = v_u_190()
-													local v333
-													if (v332 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v332 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v332 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-														v333 = true
-													else
-														local v337, v338 = v_u_172(function()
-															-- upvalues: (ref) v_u_188, (ref) v_u_177
-															local v334 = v_u_188(1000000, 9999999)
-															local v335 = Instance.new("Folder")
-															v335.Name = v_u_177(v334)
-															local v336 = v335.Name
-															v335:Destroy()
-															return v336 == v_u_177(v334)
-														end)
-														v333 = v337 and v338
-													end
-													if not v333 then
-														return false
-													end
-													local v339 = v_u_190()
-													local v340
-													if (v339 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v339 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v339 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-														v340 = true
-													else
-														local v342, v343 = v_u_172(function()
-															-- upvalues: (ref) v_u_188
-															local v341 = v_u_188(1000000, 9999999)
-															return v341 == v341
-														end)
-														v340 = v342 and v343
-													end
-													return v340 and true or false
-												end)
-												v307 = v344 and v345
-											end
-											if not v307 then
-												warn("Full validation failed. Context:", v_u_156)
-												while true do
-
-												end
-											end
-										end
-									end
-								end)
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_257, (ref) v_u_172
-									while v_u_180(20) do
-										local v346 = v_u_190()
-										if v346 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v346 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v346 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-											local v347, v_u_348, v_u_349 = v_u_257()
-											if not v347 then
-												local v_u_350 = game:GetService("HttpService")
-												local _, _ = v_u_172(function()
-													-- upvalues: (copy) v_u_350, (copy) v_u_348, (copy) v_u_349, (ref) v_u_156
-													return v_u_350:JSONEncode({
-														["results"] = v_u_348,
-														["counts"] = v_u_349,
-														["context"] = v_u_156
-													})
-												end)
-											end
-										end
-									end
-								end)
-								local v_u_351 = 0
-								game:GetService("ReplicatedStorage").Events.retrieveClientInfo.OnClientInvoke = function(p352)
-									if p352 == "ClientFPS" then
-										return 1 / game:GetService("RunService").RenderStepped:Wait()
-									end
-								end
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_351, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_164, (ref) v_u_165, (ref) v_u_268, (ref) v_u_267, (ref) v_u_270, (ref) v_u_187, (ref) v_u_189, (ref) v_u_184, (ref) v_u_185, (ref) v_u_182, (copy) v_u_266, (ref) v_u_271
-									while true do
-										while true do
-											if not v_u_180(2) then
-												return
-											end
-											v_u_351 = v_u_351 + 1
-											if v_u_351 % 15 ~= 0 then
-												break
-											end
-											local v353 = v_u_190()
-											if v353 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v353 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v353 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-												local v354 = v_u_190()
-												local v355
-												if (v354 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v354 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v354 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-													v355 = true
-												else
-													local v359, v360 = v_u_172(function()
-														-- upvalues: (ref) v_u_219, (ref) v_u_172, (ref) v_u_162
-														if not v_u_219() then
-															return false
-														end
-														local v357, v358 = v_u_172(function()
-															-- upvalues: (ref) v_u_162
-															local v356
-															if v_u_162[1] == "RenderStepped" and (v_u_162[2] == "HumanoidRootPart" and (v_u_162[3] == "Humanoid" and (v_u_162[4] == 16379 and v_u_162[5] == game))) then
-																v356 = v_u_162[6] == workspace
-															else
-																v356 = false
-															end
-															return v356
-														end)
-														return v357 and v358 and true or false
-													end)
-													v355 = v359 and v360
-												end
-												if not v355 then
-													v_u_164.constants = v_u_164.constants + 1
-													v_u_165.constants = v_u_190()
-													local _ = (v_u_156.avgFPS < 30 and 8 or (v_u_156.avgPing > 200 and 8 or (v_u_156.deviceType == "Mobile" and 7 or 5))) <= v_u_164.constants
-												end
-												goto l4
-											end
-										end
-										::l4::
-										if v_u_268 and v_u_267 then
-											v_u_270 = v_u_270 + 1
-											local v_u_361 = v_u_187("%d|%d", v_u_270, (v_u_189(v_u_190() * 1000)))
-											local v_u_362 = v_u_267
-											local v_u_363 = v_u_270
-											local v369, v370 = v_u_172(function()
-												-- upvalues: (copy) v_u_361, (ref) v_u_184, (copy) v_u_362, (copy) v_u_363, (ref) v_u_185, (ref) v_u_182
-												local v364 = table.create(#v_u_361)
-												for v365 = 1, #v_u_361 do
-													local v366 = v_u_184(v_u_362, (v365 + v_u_363) % #v_u_362 + 1)
-													local v367 = v_u_185
-													local v368 = v_u_184(v_u_361, v365)
-													v364[v365] = v367((bit32.bxor(v368, v366)))
-												end
-												return v_u_182(v364)
-											end)
-											local v_u_371 = v369 and v370 and v370 or nil
-											if v_u_371 and v_u_172(function()
-												-- upvalues: (ref) v_u_266, (copy) v_u_371, (ref) v_u_270
-												v_u_266:FireServer(v_u_371, v_u_270)
-											end) then
-												v_u_271 = v_u_190()
-											end
-										end
-									end
-								end)
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_270, (ref) v_u_168, (ref) v_u_267
-									while v_u_180(3) do
-										v_u_168:SendMessage("RequestPhysicsReport", v_u_270 + 1000000, v_u_267)
-									end
-								end)
-								v_u_262.CharacterAdded:Connect(function(p_u_372)
-									-- upvalues: (ref) v_u_158, (ref) v_u_190, (ref) v_u_176, (ref) v_u_159, (ref) v_u_186, (ref) v_u_157, (ref) v_u_180, (ref) v_u_181, (ref) v_u_188, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_164, (ref) v_u_165, (copy) v_u_262, (ref) v_u_153, (ref) v_u_154, (ref) v_u_155
-									v_u_158.characterSpawnTime = v_u_190()
-									local v_u_373 = p_u_372:WaitForChild("HumanoidRootPart")
-									local v_u_374 = p_u_372.Humanoid
-									local v_u_375 = v_u_374.JumpPower
-									local v_u_376 = nil
-									local v_u_377 = {}
-									v_u_190()
-									v_u_373:GetPropertyChangedSignal("CanCollide"):Connect(function()
-										-- upvalues: (ref) v_u_176, (copy) v_u_373, (ref) v_u_159, (ref) v_u_186, (copy) v_u_374, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157
-										-- failed to decompile
-									end)
-									v_u_373:GetPropertyChangedSignal("CFrame"):Connect(function()
-										-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (copy) v_u_374, (copy) p_u_372, (ref) v_u_180
-										local v378 = v_u_190()
-										if v378 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v378 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v378 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) then
-											if v_u_374:GetState() == Enum.HumanoidStateType.Swimming and v_u_374.FloorMaterial == Enum.Material.Air then
-												local v379 = p_u_372.Head
-												local v380 = v379.Position - 0.5 * v379.Size
-												local v381 = v379.Position + 0.5 * v379.Size
-												local v382 = Region3.new(v380, v381):ExpandToGrid(4)
-												if workspace.Terrain:ReadVoxels(v382, 4)[1][1][1] ~= Enum.Material.Water then
-													v_u_180(0.1)
-													if workspace.Terrain:ReadVoxels(v382, 4)[1][1][1] ~= Enum.Material.Water then
-														while true do
-
-														end
-													end
-												end
-											end
-										end
-									end)
-									local v_u_383 = 0
-									local v_u_384 = false
-									v_u_374:GetPropertyChangedSignal("JumpPower"):Connect(function()
-										-- upvalues: (ref) v_u_190, (ref) v_u_384, (ref) v_u_383, (copy) v_u_374, (copy) v_u_375, (ref) v_u_181
-										local v385 = v_u_190()
-										if not v_u_384 or v385 - v_u_383 >= 2 then
-											if v_u_374.JumpPower ~= v_u_375 then
-												v_u_383 = v385
-												v_u_384 = true
-												v_u_181(2.5, function()
-													-- upvalues: (ref) v_u_374, (ref) v_u_375, (ref) v_u_384
-													if v_u_374.JumpPower ~= v_u_375 then
-														v_u_374.JumpPower = v_u_375
-													end
-													v_u_384 = false
-												end)
-											end
-										end
-									end)
-									v_u_374.StateChanged:Connect(function(p386, p387)
-										-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_188, (ref) v_u_156, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_164, (ref) v_u_165, (copy) v_u_377, (ref) v_u_262
-										local v388 = v_u_190()
-										if v388 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v388 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v388 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery) then
-											return
-										else
-											if v_u_188() > 0.8 then
-												local v389 = v_u_190()
-												local v390
-												if (v389 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v389 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v389 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery)) and true or (v_u_156.consecutiveLowFPS > 10 and true or v_u_156.avgPing > 500) then
-													v390 = true
-												else
-													local v394, v395 = v_u_172(function()
-														-- upvalues: (ref) v_u_219, (ref) v_u_172, (ref) v_u_162
-														if not v_u_219() then
-															return false
-														end
-														local v392, v393 = v_u_172(function()
-															-- upvalues: (ref) v_u_162
-															local v391
-															if v_u_162[1] == "RenderStepped" and (v_u_162[2] == "HumanoidRootPart" and (v_u_162[3] == "Humanoid" and (v_u_162[4] == 16379 and v_u_162[5] == game))) then
-																v391 = v_u_162[6] == workspace
-															else
-																v391 = false
-															end
-															return v391
-														end)
-														return v392 and v393 and true or false
-													end)
-													v390 = v394 and v395
-												end
-												if not v390 then
-													v_u_164.constants = v_u_164.constants + 1
-													v_u_165.constants = v_u_190()
-													if (v_u_156.avgFPS < 30 and 8 or (v_u_156.avgPing > 200 and 8 or (v_u_156.deviceType == "Mobile" and 7 or 5))) <= v_u_164.constants then
-														v_u_164.constants = 0
-														v_u_165.constants = nil
-													end
-												end
-											end
-											local v396 = v_u_377
-											local v397 = {
-												["old"] = p386,
-												["new"] = p387,
-												["time"] = v_u_190()
-											}
-											table.insert(v396, v397)
-											local v398 = v_u_190()
-											for v399 = #v_u_377, 1, -1 do
-												if v398 - v_u_377[v399].time > 0.5 then
-													table.remove(v_u_377, v399)
-												end
-											end
-											local v400 = 0
-											for _, v401 in ipairs(v_u_377) do
-												if v401.old == Enum.HumanoidStateType.Jumping and v401.new == Enum.HumanoidStateType.Jumping then
-													v400 = v400 + 1
-												end
-												if v401.old == Enum.HumanoidStateType.Freefall and v401.new == Enum.HumanoidStateType.Jumping then
-													v400 = v400 + 1
-												end
-											end
-											if v400 >= 3 then
-												v_u_262:Destroy()
-												pcall(function()
-													-- upvalues: (ref) v_u_262
-													v_u_262:Kick()
-												end)
-												while true do
-
-												end
-											else
-												return
-											end
-										end
-									end)
-									v_u_374.StateChanged:Connect(function()
-										-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_176, (copy) v_u_374, (ref) v_u_159, (ref) v_u_186, (ref) v_u_262
-										-- failed to decompile
-									end)
-									local v_u_402 = v_u_374:GetState()
-									local v_u_403 = 0
-									local v_u_404 = v_u_190()
-									coroutine.wrap(function()
-										-- upvalues: (ref) v_u_153, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (copy) v_u_374, (ref) v_u_402, (ref) v_u_403, (ref) v_u_404, (ref) v_u_164, (ref) v_u_165
-										v_u_153.Heartbeat:Connect(function()
-											-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_374, (ref) v_u_402, (ref) v_u_403, (ref) v_u_404, (ref) v_u_164, (ref) v_u_165
-											local v405 = v_u_190()
-											if v405 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v405 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v405 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) then
-												local v406 = v_u_374:GetState()
-												if v406 ~= v_u_402 then
-													v_u_403 = v_u_403 + 1
-													if v_u_190() - v_u_404 > 10 then
-														v_u_403 = 0
-													end
-													v_u_404 = v_u_190()
-												end
-												v_u_402 = v406
-												if v_u_403 > 100 then
-													v_u_164.stateDesync = v_u_164.stateDesync + 1
-													v_u_165.stateDesync = v_u_190()
-												end
-											end
-										end)
-									end)()
-									local v_u_407 = false
-									local v_u_408 = 0
-									workspace:GetPropertyChangedSignal("Gravity"):Connect(function()
-										-- upvalues: (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_407, (ref) v_u_408, (ref) v_u_154, (ref) v_u_181
-										local v409 = v_u_190()
-										if v409 - v_u_158.characterSpawnTime < v_u_157.characterSpawn and true or (v409 - v_u_158.sessionStartTime < v_u_157.sessionStart and true or v409 - v_u_158.lastLagSpikeTime < v_u_157.lagRecovery) then
-											return
-										else
-											local v410 = v_u_190()
-											if not v_u_407 or v410 - v_u_408 >= 3 then
-												if workspace.Gravity ~= v_u_154 then
-													v_u_408 = v410
-													v_u_407 = true
-													v_u_181(3.5, function()
-														-- upvalues: (ref) v_u_154, (ref) v_u_407
-														if workspace.Gravity ~= v_u_154 then
-															workspace.Gravity = v_u_154
-														end
-														v_u_407 = false
-													end)
-												end
-											end
-										end
-									end)
-									v_u_262.Backpack.ChildAdded:Connect(function(p411)
-										-- upvalues: (ref) v_u_159, (ref) v_u_186
-										if not p411:IsA("HopperBin") then
-											::l2::
-											return
-										end
-										local v412 = p411.Name
-										for _, v413 in ipairs(v_u_159) do
-											if v_u_186(v412, v413) then
-												v414 = true
-												::l6::
-												if not v414 then
-													p411:Destroy()
-												end
-												goto l2
-											end
-										end
-										local v414 = false
-										goto l6
-									end)
-									v_u_374.Died:Connect(function()
-										-- upvalues: (ref) v_u_376
-										if v_u_376 then
-											v_u_376:Disconnect()
-											v_u_376 = nil
-										end
-									end)
-									v_u_155.Destroying:Connect(function()
-										while true do
-
-										end
-									end)
-									v_u_155:GetPropertyChangedSignal("Enabled"):Connect(function()
-										-- upvalues: (ref) v_u_155
-										v_u_155.Enabled = true
-										while true do
-
-										end
-									end)
-									local v_u_415 = 0
-									v_u_376 = v_u_153.RenderStepped:Connect(function()
-										-- upvalues: (ref) v_u_415, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_188, (ref) v_u_172, (ref) v_u_219, (ref) v_u_162, (ref) v_u_164, (ref) v_u_165, (copy) v_u_373, (ref) v_u_176, (ref) v_u_159, (ref) v_u_186
-										-- failed to decompile
-									end)
-								end)
-								local _ = game.Players.LocalPlayer
-								v_u_179(function()
-									-- upvalues: (ref) v_u_180, (ref) v_u_190, (ref) v_u_158, (ref) v_u_157, (ref) v_u_156, (ref) v_u_257, (ref) v_u_175
-									while v_u_180(10) do
-										local v416 = v_u_190()
-										if v416 - v_u_158.characterSpawnTime >= v_u_157.characterSpawn and (v416 - v_u_158.sessionStartTime >= v_u_157.sessionStart and v416 - v_u_158.lastLagSpikeTime >= v_u_157.lagRecovery) and (v_u_156.consecutiveLowFPS <= 10 and v_u_156.avgPing <= 500) then
-											local v417, _, v418 = v_u_257()
-											if not v417 then
-												local v419 = 0
-												for _, v420 in v_u_175(v418) do
-													v419 = v419 + v420
-												end
-												if (v_u_156.avgFPS < 30 and 8 or (v_u_156.avgPing > 200 and 8 or (v_u_156.deviceType == "Mobile" and 7 or 5))) * 3 <= v419 then
-													warn("Multiple detections triggered. Context:", v_u_156, "Counts:", v418)
-													return
-												end
-											end
-										end
-									end
-								end)
-							end
+	end
+	if v_u_129 == game.Players.LocalPlayer then
+		v_u_121(true)
+	end
+	if v_u_5.NEW_COMBAT_SYSTEM_VISUALIZE_HITBOXES then
+		task.delay(0.1, function()
+			-- upvalues: (ref) v_u_160
+			v_u_160:Destroy()
+		end)
+		if v_u_159 then
+			task.delay(0.1, function()
+				-- upvalues: (ref) v_u_159
+				v_u_159:Destroy()
+			end)
+		end
+	end
+end
+function v_u_9.GetWeaponData(_, p230)
+	-- upvalues: (copy) v_u_9, (copy) v_u_4
+	for _, v231 in {
+		p230,
+		v_u_9:GetPureWeaponName(p230),
+		string.gsub(p230, "%s", ""),
+		string.lower(p230),
+		string.lower(p230:sub(1, 1)) .. p230:sub(2, #p230),
+		string.upper(p230:sub(1, 1)) .. p230:sub(2, #p230)
+	} do
+		local v232 = v_u_4[v231]
+		if v232 then
+			return v232
+		end
+	end
+end
+function v_u_9.GetWeaponName(_, p233)
+	return p233:GetAttribute("WeaponName") or p233.Name
+end
+function v_u_9.GetWeaponModel(_, p234, p235)
+	-- upvalues: (copy) v_u_9
+	local v236 = v_u_9:GetPureWeaponName(p235)
+	for _, v237 in p234:GetChildren() do
+		if v_u_9:GetPureWeaponName(v237.Name) == v236 then
+			return v237
+		end
+	end
+end
+function v_u_9.GetEquippedWeaponTool(_, p238)
+	for _, v239 in p238:GetChildren() do
+		if v239:IsA("Tool") and (v239:HasTag("MeleeTool") or v239:HasTag("GunTool")) then
+			return v239
+		end
+	end
+end
+function v_u_9.CreateShootAngles(_, p240)
+	if p240.NoSpread then
+		return {
+			{
+				["Angle"] = CFrame.Angles(0, 0, 0)
+			}
+		}
+	end
+	local v_u_241 = {}
+	local v_u_242 = Random.new(p240.Seed)
+	local v243 = p240.BulletSpreadCount or 7
+	local v_u_244 = p240.BulletSpreadDegree or 12
+	local function v253()
+		-- upvalues: (copy) v_u_242, (copy) v_u_244, (copy) v_u_241
+		local v245 = v_u_242:NextNumber(-v_u_244 / 2, v_u_244 / 2)
+		local v246 = math.rad(v245)
+		local v247 = v_u_242:NextNumber(-v_u_244 / 2, v_u_244 / 2)
+		local v248 = math.rad(v247)
+		local v249 = v_u_242:NextNumber(-v_u_244 / 2, v_u_244 / 2)
+		local v250 = math.rad(v249)
+		local v251 = v_u_241
+		local v252 = {
+			["Angle"] = CFrame.Angles(v246, v248, v250)
+		}
+		table.insert(v251, v252)
+	end
+	if p240.BulletSpreadCount == 1 then
+		v253()
+		return v_u_241
+	end
+	local v254 = {
+		["Angle"] = CFrame.Angles(0, 0, 0)
+	}
+	table.insert(v_u_241, v254)
+	for _ = 1, v243 - 1 do
+		v253()
+	end
+	return v_u_241
+end
+function v_u_9.GetToolOfWeaponType(_, p255, p256)
+	-- upvalues: (copy) v_u_3
+	local v257 = v_u_3:GetPlayerFromCharacter(p255)
+	if v257 then
+		for _, v258 in v257.Backpack:GetChildren() do
+			if v258:IsA("Tool") and v258:GetAttribute("WeaponType") == p256 then
+				return v258
+			end
+		end
+	end
+	local v259 = p255:FindFirstChildWhichIsA("Tool")
+	if v259 and v259:GetAttribute("WeaponType") == p256 then
+		return v259
+	end
+end
+function v_u_9.PlayMeleeHitParticles(_, p_u_260, p_u_261, p_u_262)
+	-- upvalues: (copy) v_u_9, (ref) v_u_34
+	task.defer(function()
+		-- upvalues: (copy) p_u_261, (copy) p_u_260, (ref) v_u_9, (copy) p_u_262, (ref) v_u_34
+		local v263 = p_u_261 and p_u_261.Position or p_u_260:GetPivot().Position
+		local v264 = v_u_9:GetWeaponData(p_u_262)
+		v_u_34.play("Hit", v263, v264)
+	end)
+end
+function v_u_9.ApplyDamageHighlight(_, p265, p266, p267, p268, p269, _)
+	-- upvalues: (copy) v_u_9, (copy) v_u_3, (copy) v_u_11, (copy) v_u_1, (copy) v_u_13
+	if v_u_9:HasRigEquipped(p265) then
+		return
+	else
+		local v270 = v_u_3:GetPlayerFromCharacter(p265)
+		local v271 = v_u_3:GetPlayerFromCharacter(p266)
+		if v270 or v271 then
+			if not (v270 and (v271 and _G.InSafeZone)) then
+				if v270 then
+					if v270:GetAttribute("PvpDisabled") then
+						return
+					end
+					if v270:GetAttribute("KenActive") then
+						local v272 = v270:GetAttribute("KenDodgesLeft") or 0
+						local v273 = v270:GetAttribute("LastKenDodge") or 0
+						local v274 = tick() - v273 <= 0.4
+						if v272 > 0 or v274 then
 							return
 						end
 					end
 				end
-				if v_u_89 and v_u_88 then
-					v_u_91 = v_u_91 + 1
-					local v_u_421 = v_u_30("%d|%d", v_u_91, (v_u_32(v_u_33() * 1000)))
-					local v_u_422 = v_u_88
-					local v_u_423 = v_u_91
-					local v428, v429 = v_u_15(function()
-						-- upvalues: (copy) v_u_421, (copy) v_u_422, (copy) v_u_423, (ref) v_u_27, (ref) v_u_28, (ref) v_u_25
-						local v424 = table.create(#v_u_421)
-						for v425 = 1, #v_u_421 do
-							local v426 = v_u_27(v_u_422, (v425 + v_u_423) % #v_u_422 + 1)
-							local v427 = v_u_27(v_u_421, v425)
-							v424[v425] = v_u_28((bit32.bxor(v427, v426)))
-						end
-						return v_u_25(v424)
-					end)
-					local v_u_430 = v428 and v429 and v429 or nil
-					if v_u_430 and v_u_15(function()
-						-- upvalues: (ref) v_u_87, (copy) v_u_430, (ref) v_u_91
-						v_u_87:FireServer(v_u_430, v_u_91)
-					end) then
-						v_u_92 = v_u_33()
+				local v275
+				if p266 and p266:IsDescendantOf(v_u_11) then
+					v275 = p266
+				else
+					v275 = nil
+				end
+				local v276
+				if p265 and p265:IsDescendantOf(v_u_11) then
+					v276 = p265
+				else
+					v276 = nil
+				end
+				local v277 = v275 and v275:GetAttribute("Level")
+				if not v277 then
+					if v276 then
+						v277 = v276:GetAttribute("Level")
+					else
+						v277 = v276
 					end
 				end
-			end
-		end)
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_91, (ref) v_u_11, (ref) v_u_88
-			while v_u_23(2) do
-				v_u_11:SendMessage("RequestPhysicsReport", v_u_91 + 1000000, v_u_88)
-			end
-		end)
-		v_u_86.CharacterAdded:Connect(function(p_u_431)
-			-- upvalues: (ref) v_u_19, (ref) v_u_29, (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_9, (copy) v_u_86, (ref) v_u_2, (ref) v_u_3, (ref) v_u_4, (ref) v_u_31
-			local v_u_432 = p_u_431:WaitForChild("HumanoidRootPart")
-			local v_u_433 = p_u_431.Humanoid
-			local v_u_434 = v_u_433.JumpPower
-			local v_u_435 = nil
-			v_u_432:GetPropertyChangedSignal("CanCollide"):Connect(function()
-				-- upvalues: (copy) v_u_433, (ref) v_u_19, (copy) v_u_432, (ref) v_u_29
-				if not v_u_433:FindFirstChild("ADONIS_NoClip") then
-					for _, v436 in v_u_19(v_u_432:GetChildren()) do
-						if v_u_29(v436.Name, "ADONIS_") then
+				local v278 = v275 and v275:GetAttribute("IsBoss")
+				if not v278 then
+					if v276 then
+						v278 = v276:GetAttribute("IsBoss")
+					else
+						v278 = v276
+					end
+				end
+				local v279
+				if v271 then
+					v279 = v271:FindFirstChild("Data")
+				else
+					v279 = v271
+				end
+				local v280
+				if v270 then
+					v280 = v270:FindFirstChild("Data")
+				else
+					v280 = v270
+				end
+				local v281 = v279 and v279.Level.Value or (v275 and v277 and v277 or 1)
+				local v282 = v280 and v280.Level.Value or v276 and v277
+				local v283 = (v281 / 175) ^ 1.5
+				local v284 = math.floor(v283) * 2
+				local v285 = nil
+				if v271 then
+					local v286 = v_u_9:GetToolOfWeaponType(p266, "Melee")
+					if v286 then
+						v285 = v286:GetAttribute("WeaponName")
+					end
+				elseif v275 then
+					v285 = v275:GetAttribute("WeaponName")
+				end
+				local v287 = v_u_9:GetToolOfWeaponType(p265, "Demon Fruit")
+				if p268 == "Melee" or (p268 == "Sword" or p268 == "Gun") then
+					if v287 and (v287.Name == "Rubber-Rubber" and (p268 == "Melee" and (v279 and v285 == "Electro"))) then
+						return
+					end
+					if v287 and (v287.Name == "Blade-Blade" and p268 == "Sword") and (v275 and not v278 or not v275) then
+						if v275 and v277 <= v282 - v284 or not v275 then
 							return
 						end
-					end
-					v_u_432.CanCollide = true
-				end
-			end)
-			v_u_432:GetPropertyChangedSignal("CFrame"):Connect(function()
-				-- upvalues: (copy) v_u_433, (copy) p_u_431
-				if v_u_433:GetState() == Enum.HumanoidStateType.Swimming and v_u_433.FloorMaterial == Enum.Material.Air then
-					local v437 = p_u_431.Head
-					local v438 = v437.Position - 0.5 * v437.Size
-					local v439 = v437.Position + 0.5 * v437.Size
-					local v440 = Region3.new(v438, v439):ExpandToGrid(4)
-					if workspace.Terrain:ReadVoxels(v440, 4)[1][1][1] ~= Enum.Material.Water then
-						while true do
-
+					elseif v287 and (v287.Name == "Rubber-Rubber" and p268 == "Gun") and (v275 and not v278 or not v275) then
+						if v275 and v277 <= v282 - v284 or not v275 then
+							return
 						end
-					end
-				end
-			end)
-			v_u_433:GetPropertyChangedSignal("JumpPower"):Connect(function()
-				-- upvalues: (copy) v_u_433, (copy) v_u_434
-				if v_u_433.JumpPower ~= v_u_434 then
-					v_u_433.JumpPower = v_u_434
-				end
-			end)
-			v_u_433.StateChanged:Connect(function(p441, p442)
-				-- upvalues: (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_9, (ref) v_u_86
-				local v446, v447 = v_u_15(function()
-					-- upvalues: (ref) v_u_40, (ref) v_u_15, (ref) v_u_7
-					if not v_u_40() then
-						return false
-					end
-					local v444, v445 = v_u_15(function()
-						-- upvalues: (ref) v_u_7
-						local v443
-						if v_u_7[1] == "RenderStepped" and (v_u_7[2] == "HumanoidRootPart" and (v_u_7[3] == "Humanoid" and (v_u_7[4] == 16379 and v_u_7[5] == game))) then
-							v443 = v_u_7[6] == workspace
-						else
-							v443 = false
+					elseif v287 and (v287:FindFirstChild("Logia") and not p266:GetAttribute("BusoEnabled")) then
+						if v275 and v277 <= v282 - v284 or not v275 then
+							return
 						end
-						return v443
-					end)
-					return v444 and v445 and true or false
-				end)
-				if not (v446 and v447) then
-					local v448 = v_u_9
-					v448.constants = v448.constants + 1
-					if v_u_9.constants >= 3 then
-						v_u_9.constants = 0
-					end
-				end
-				if p441 == Enum.HumanoidStateType.Jumping and p442 == Enum.HumanoidStateType.Jumping or p441 == Enum.HumanoidStateType.Freefall and p442 == Enum.HumanoidStateType.Jumping then
-					v_u_86:Destroy()
-					pcall(function()
-						-- upvalues: (ref) v_u_86
-						v_u_86:Kick()
-					end)
-					while true do
-
-					end
-				else
-					return
-				end
-			end)
-			v_u_433.StateChanged:Connect(function(_, p449)
-				-- upvalues: (ref) v_u_86
-				if p449 == Enum.HumanoidStateType.Flying or p449 == Enum.HumanoidStateType.StrafingNoPhysics then
-					v_u_86:Destroy()
-					pcall(function()
-						-- upvalues: (ref) v_u_86
-						v_u_86:Kick()
-					end)
-					while true do
-
-					end
-				else
-					return
-				end
-			end)
-			local v_u_450 = v_u_433:GetState()
-			coroutine.wrap(function()
-				-- upvalues: (ref) v_u_2, (copy) v_u_433, (ref) v_u_450, (ref) v_u_9
-				v_u_2.Heartbeat:Connect(function()
-					-- upvalues: (ref) v_u_433, (ref) v_u_450, (ref) v_u_9
-					local v451 = v_u_433:GetState()
-					if v451 ~= v_u_450 then
-						local v452 = v_u_9
-						v452.stateDesync = v452.stateDesync + 1
-					end
-					v_u_450 = v451
-				end)
-			end)
-			workspace:GetPropertyChangedSignal("Gravity"):Connect(function()
-				-- upvalues: (ref) v_u_3
-				if workspace.Gravity ~= v_u_3 then
-					workspace.Gravity = v_u_3
-				end
-			end)
-			v_u_86.Backpack.ChildAdded:Connect(function(p453)
-				if p453:IsA("HopperBin") then
-					p453:Destroy()
-				end
-			end)
-			v_u_433.Died:Connect(function()
-				-- upvalues: (ref) v_u_435
-				if v_u_435 then
-					v_u_435:Disconnect()
-					v_u_435 = nil
-				end
-			end)
-			v_u_4.Destroying:Connect(function()
-				while true do
-
-				end
-			end)
-			v_u_4:GetPropertyChangedSignal("Enabled"):Connect(function()
-				-- upvalues: (ref) v_u_4
-				v_u_4.Enabled = true
-				while true do
-
-				end
-			end)
-			v_u_435 = v_u_2.RenderStepped:Connect(function()
-				-- upvalues: (ref) v_u_31, (ref) v_u_15, (ref) v_u_40, (ref) v_u_7, (ref) v_u_9, (copy) v_u_432, (ref) v_u_4
-				if v_u_31() > 0.999 then
-					local v457, v458 = v_u_15(function()
-						-- upvalues: (ref) v_u_40, (ref) v_u_15, (ref) v_u_7
-						if not v_u_40() then
-							return false
-						end
-						local v455, v456 = v_u_15(function()
-							-- upvalues: (ref) v_u_7
-							local v454
-							if v_u_7[1] == "RenderStepped" and (v_u_7[2] == "HumanoidRootPart" and (v_u_7[3] == "Humanoid" and (v_u_7[4] == 16379 and v_u_7[5] == game))) then
-								v454 = v_u_7[6] == workspace
-							else
-								v454 = false
-							end
-							return v454
-						end)
-						return v455 and v456 and true or false
-					end)
-					if not (v457 and v458) then
-						local v459 = v_u_9
-						v459.constants = v459.constants + 1
-					end
-				end
-				if v_u_432 then
-					v_u_432.CanCollide = true
-				end
-			end)
-		end)
-		local _ = game.Players.LocalPlayer
-		v_u_22(function()
-			-- upvalues: (ref) v_u_23, (ref) v_u_81, (ref) v_u_18
-			while v_u_23(5) do
-				local v460, _, v461 = v_u_81()
-				if not v460 then
-					local v462 = 0
-					for _, v463 in v_u_18(v461) do
-						v462 = v462 + v463
-					end
-					if v462 >= 6 then
-						warn("fired1")
+					elseif v287 and (v287:FindFirstChild("LogiaDough") and (v270 and (v270:GetAttribute("KenActive") and not p266:GetAttribute("BusoEnabled")))) and (v275 and v277 <= v282 - v284 or not v275) then
 						return
 					end
 				end
+				if v270 or (p265:GetAttribute("FruitType") ~= "Logia" or p266:GetAttribute("BusoEnabled")) then
+					if p268 ~= "Gun" then
+						v_u_9:PlayMeleeHitParticles(p265, p269, p267)
+					end
+					local v_u_288 = p265:FindFirstChildOfClass("Highlight")
+					if v_u_288 then
+						if v_u_288:GetAttribute("__FillColor") then
+							local v289 = {
+								["FillColor"] = Color3.fromRGB(138, 0, 0)
+							}
+							v_u_1:Create(v_u_288, TweenInfo.new(0.2), v289):Play()
+							task.delay(0.2, function()
+								-- upvalues: (ref) v_u_1, (copy) v_u_288
+								v_u_1:Create(v_u_288, TweenInfo.new(0.2), {
+									["FillColor"] = v_u_288:GetAttribute("__FillColor")
+								}):Play()
+							end)
+						end
+						return true
+					end
+					local v_u_290 = v_u_13(script.DamageHighlight):Clone()
+					v_u_290.Parent = p265
+					v_u_1:Create(v_u_290, TweenInfo.new(0.2), {
+						["FillTransparency"] = 0.5
+					}):Play()
+					task.delay(0.2, function()
+						-- upvalues: (ref) v_u_1, (copy) v_u_290
+						v_u_1:Create(v_u_290, TweenInfo.new(0.2), {
+							["FillTransparency"] = 1
+						}):Play()
+						task.wait(0.2)
+						v_u_290:Destroy()
+					end)
+					return true
+				end
 			end
-		end)
+		else
+			return
+		end
 	end
 end
-return v_u_1
+function v_u_9.IsGunReloading(_, p291)
+	-- upvalues: (copy) v_u_14
+	if v_u_14 then
+		return not p291.Enabled or (p291:GetAttribute("IsReloading") or p291:GetAttribute("UnequipAutoReloading"))
+	else
+		return not p291.Enabled or (p291:GetAttribute("IsReloading_Client") or p291:GetAttribute("UnequipAutoReloading"))
+	end
+end
+local v_u_292 = RaycastParams.new()
+v_u_292.FilterType = Enum.RaycastFilterType.Exclude
+v_u_292.FilterDescendantsInstances = { workspace._WorldOrigin, workspace.Characters, v_u_11 }
+local v_u_293 = RaycastParams.new()
+v_u_293.FilterType = Enum.RaycastFilterType.Exclude
+function v_u_9.GetTargetPosition(_, p294, p295, p296, p297)
+	-- upvalues: (copy) v_u_293, (copy) v_u_292
+	debug.profilebegin("GetTargetPosition")
+	local v298 = p296 or (1 / 0)
+	local v299 = p295 - p294
+	if v298 < v299.Magnitude then
+		p295 = p294 + v299.Unit * v298
+	end
+	if p297 then
+		v_u_293.FilterDescendantsInstances = { workspace._WorldOrigin, p297 }
+	end
+	local v300 = workspace:Raycast(p294, p295 - p294, p297 and v_u_293 or v_u_292)
+	if v300 then
+		p295 = v300.Position
+	end
+	debug.profileend()
+	return p295
+end
+return v_u_9
