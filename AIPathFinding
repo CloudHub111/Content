@@ -103,6 +103,44 @@ function Network.backprop(target)
 	end
 end
 
+local HttpService = game:GetService("HttpService")
+
+function Network:Save()
+	local data = {}
+
+	for l, layer in ipairs(self.layers) do
+		data[l] = {}
+		for i, neuron in ipairs(layer) do
+			data[l][i] = {
+				bias = neuron.bias,
+				weights = neuron.weights
+			}
+		end
+	end
+
+	local json = HttpService:JSONEncode(data)
+
+	if writefile then
+		writefile("DeepPS.json", json)
+	end
+end
+
+function Network:Load()
+	if readfile and isfile and isfile("DeepPS.json") then
+		local json = readfile("DeepPS.json")
+		local data = HttpService:JSONDecode(json)
+
+		for l, layer in ipairs(self.layers) do
+			for i, neuron in ipairs(layer) do
+				neuron.bias = data[l][i].bias
+				neuron.weights = data[l][i].weights
+			end
+		end
+	end
+end
+
+Network:Load()
+
 local Pathfinding = {}
 
 local dataset = {}
@@ -113,14 +151,28 @@ function Pathfinding:Record(state: boolean)
 end
 
 function Pathfinding:GetVision(a, b, ignore)
-	local dir = b - a
+	local dir = (b - a)
+	local right = dir:Cross(Vector3.new(0,1,0)).Unit
+
+	local offsets = {
+		Vector3.new(),
+		right * 2,
+		-right * 2,
+		Vector3.new(0,2,0),
+	}
+
 	local params = RaycastParams.new()
 	params.FilterDescendantsInstances = ignore or {}
 	params.FilterType = Enum.RaycastFilterType.Blacklist
 
-	local result = workspace:Raycast(a, dir, params)
+	for _, offset in ipairs(offsets) do
+		local result = workspace:Raycast(a + offset, dir, params)
+		if result then
+			return true
+		end
+	end
 
-	return result ~= nil
+	return false
 end
 
 local function heuristic(a,b)
@@ -135,6 +187,9 @@ local function neighbors(pos, step)
 		pos + Vector3.new(0,0,-step),
 	}
 end
+
+local playerDataset = {}
+local recordPlayer = false
 
 function Pathfinding:FindPath(startPos, goalPos, params)
 	params = params or {}
@@ -207,7 +262,17 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			if closed[nk] then continue end
 
 			local blocked = Pathfinding:GetVision(current.pos, nPos, ignore)
-			if blocked then continue end
+
+            local clearancePenalty = 0
+
+            if blocked then
+            	continue
+            else
+	        local nearby = Pathfinding:GetVision(nPos, nPos + Vector3.new(2,0,0), ignore)
+	       if nearby then
+		        clearancePenalty = 2
+	        end
+          end
 
 			local g = current.g + step
 
@@ -231,7 +296,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 
             local influence = math.clamp(nn * alpha * confidence, -5, 5)
 
-            local f = g + h + influence
+            local f = g + h + influence + clearancePenalty
 
 			table.insert(self._memory, input)
 
@@ -247,24 +312,6 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 	end
 
 	return nil
-end
-
-function Pathfinding:Reward(value)
-	self._reward = value
-end
-
-function Pathfinding:ApplyReward()
-	if not self._memory then return end
-
-	for _, input in ipairs(self._memory) do
-		table.insert(dataset, {
-			input,
-			self._reward or 0
-		})
-	end
-
-	table.clear(self._memory)
-	self._reward = 0
 end
 
 function Pathfinding:Train(epochs)
@@ -285,6 +332,60 @@ function Pathfinding:AdvancedTrain(dataset2,epochs)
 	end
 end
 
+function Pathfinding:RecordPlayerMovement(state: boolean)
+	recordPlayer = state
+end
+
+task.spawn(function()
+	local Players = game:GetService("Players")
+	local player = Players:GetPlayers()[1]
+
+	if not player then return end
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	local lastPos = hrp.Position
+	local lastTime = tick()
+
+	while true do
+		task.wait(0.1)
+
+		if not recordPlayer then
+			lastPos = hrp.Position
+			lastTime = tick()
+			continue
+		end
+
+		local pos = hrp.Position
+		local now = tick()
+
+		local dt = now - lastTime
+		if dt <= 0 then continue end
+
+		local vel = (pos - lastPos) / dt
+
+		table.insert(playerDataset, {
+			{
+				pos.X/100,
+				pos.Z/100,
+				vel.X/50,
+				vel.Z/50
+			},
+			{
+				vel.X/50,
+				vel.Z/50
+			}
+		})
+
+		lastPos = pos
+		lastTime = now
+	end
+end)
+
 Network.Pathfinding = Pathfinding
+Network.Datasets = {
+dataset,
+playerDataset
+}
 
 return Network
