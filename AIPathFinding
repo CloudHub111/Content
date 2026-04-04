@@ -142,57 +142,34 @@ end
 Network:Load()
 
 local Pathfinding = {}
+local Dataset = {}
 
-local dataset = {}
-local recording = false
-
-function Pathfinding:Record(state: boolean)
-	recording = state
+local function heuristic(a, b)
+	return (a - b).Magnitude
 end
 
-function Pathfinding:GetVision(a, b, ignore)
-	local dir = (b - a)
-    local distance = dir.Magnitude
-    dir = dir.Unit * math.min(distance, 4)
-	local right = dir:Cross(Vector3.new(0,1,0)).Unit
-
-	local offsets = {
-	 Vector3.new(),
-   	 Vector3.new(0,1,0)
-    }
-
-	local params = RaycastParams.new()
-	params.FilterDescendantsInstances = ignore or {}
-	params.FilterType = Enum.RaycastFilterType.Blacklist
-
-	for _, offset in ipairs(offsets) do
-		local result = workspace:Raycast(a + offset, dir, params)
-		if result and result.Distance<3 then
-			return true
-		end
-	end
-
-	return false
+local function getKey(v, step)
+	return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
 end
 
-function Pathfinding:HasLineOfSight(a, b, ignore)
-	local dir = (b - a)
+local function isWalkable(from, to, ignore)
+	local dir = (to - from)
 	local dist = dir.Magnitude
 
 	local params = RaycastParams.new()
 	params.FilterDescendantsInstances = ignore or {}
 	params.FilterType = Enum.RaycastFilterType.Blacklist
 
-	local result = workspace:Raycast(a, dir.Unit * dist, params)
+	local hit = workspace:Raycast(from + Vector3.new(0,2,0), dir.Unit * dist, params)
+	if hit then return false end
 
-	return result == nil
+	local hit2 = workspace:Raycast(from, dir.Unit * dist, params)
+	if hit2 then return false end
+
+	return true
 end
 
-local function heuristic(a,b)
-	return (a - b).Magnitude
-end
-
-local function neighbors(pos, step)
+local function getNeighbors(pos, step)
 	return {
 		pos + Vector3.new(step,0,0),
 		pos + Vector3.new(-step,0,0),
@@ -206,85 +183,86 @@ local function neighbors(pos, step)
 	}
 end
 
-local playerDataset = {}
-local recordPlayer = false
+function Pathfinding:GetNNBias(input)
+	if not Network then return 0 end
 
-local function smoothPath(path, ignore)
-	if #path <= 2 then return path end
+	local raw = Network.feed(input)
+	local nn = math.tanh(raw) -- normalize (-1 → 1)
 
-	local smooth = {path[1]}
-	local i = 1
-
-	while i < #path do
-		local j = #path
-
-        local maxSkip = 20
-
-        while j > i + 1 do
-        	if (path[j] - path[i]).Magnitude > maxSkip then
-        		j -= 1
-        		continue
-        	end
-
-        	if Pathfinding:HasLineOfSight(path[i], path[j], ignore) then
-         		break
-        	end
-
-        	j -= 1
-            end
-
-		table.insert(smooth, path[j])
-		i = j
-	end
-
-	return smooth
-end
-
-function Pathfinding:GetClearance(a, dir, ignore)
-	local params = RaycastParams.new()
-	params.FilterDescendantsInstances = ignore or {}
-	params.FilterType = Enum.RaycastFilterType.Blacklist
-
-	local maxDist = 6
-	local right = dir:Cross(Vector3.new(0,1,0)).Unit
-
-	local offsets = {
-		Vector3.new(),
-		right * 1.5,
-		-right * 1.5
-	}
-
-	local minDist = maxDist
-
-	for _, offset in ipairs(offsets) do
-		local result = workspace:Raycast(a + offset, dir.Unit * maxDist, params)
-		if result then
-			minDist = math.min(minDist, result.Distance)
-		end
-	end
-
-	return minDist / maxDist
+	return nn
 end
 
 function Pathfinding:FindPath(startPos, goalPos, params)
 	params = params or {}
+
 	local step = params.Step or 4
+	local spacing = params.Spacing or 2
 	local ignore = params.Ignore or {}
 
 	local open = {}
 	local closed = {}
 
 	local function key(v)
-		return math.floor(v.X)..","..math.floor(v.Z)
+		return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
+	end
+
+	local function heuristic(a,b)
+		return (a - b).Magnitude
+	end
+
+	local function isWalkable(from, to)
+		local dir = (to - from)
+		local dist = dir.Magnitude
+
+		local paramsRay = RaycastParams.new()
+		paramsRay.FilterDescendantsInstances = ignore
+		paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
+
+		local right = dir:Cross(Vector3.new(0,1,0)).Unit
+
+		local offsets = {
+			Vector3.new(),
+			right * spacing,
+			-right * spacing,
+			Vector3.new(0,2,0)
+		}
+
+		for _, offset in ipairs(offsets) do
+			local result = workspace:Raycast(from + offset, dir.Unit * dist, paramsRay)
+			if result then
+				return false
+			end
+		end
+
+		return true
+	end
+
+	local function neighbors(pos)
+		return {
+			pos + Vector3.new(step,0,0),
+			pos + Vector3.new(-step,0,0),
+			pos + Vector3.new(0,0,step),
+			pos + Vector3.new(0,0,-step),
+
+			pos + Vector3.new(step,0,step),
+			pos + Vector3.new(-step,0,step),
+			pos + Vector3.new(step,0,-step),
+			pos + Vector3.new(-step,0,-step),
+		}
 	end
 
 	open[key(startPos)] = {
 		pos = startPos,
 		g = 0,
-		f = 0
+		f = heuristic(startPos, goalPos)
 	}
 
-	while true do
+	local iterations = 0
+	local maxIterations = 5000 -- prevents lag freeze
+
+	while iterations < maxIterations do
+		iterations += 1
+
 		local currentKey, current
 
 		for k,v in pairs(open) do
@@ -294,7 +272,9 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			end
 		end
 
-		if not current then break end
+		if not current then
+			return nil
+		end
 
 		if (current.pos - goalPos).Magnitude < step then
 			local path = {}
@@ -302,87 +282,54 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 				table.insert(path,1,current.pos)
 				current = current.parent
 			end
-
-			if recording then
-				for i=1,#path-1 do
-					local cur = path[i]
-					local nxt = path[i+1]
-
-					local move = (nxt - cur)
-					local dx = move.X
-					local dz = move.Z
-
-					local toGoal = goalPos - cur
-
-					table.insert(dataset,{
-						{
-							toGoal.X/50,
-							toGoal.Z/50,
-							0,
-							toGoal.Magnitude/50
-						},
-						1 -- good move
-					})
-				end
-			end
-
-			return smoothPath(path,ignore)
+			return path
 		end
 
 		open[currentKey] = nil
 		closed[currentKey] = true
 
-		for _,nPos in ipairs(neighbors(current.pos, step)) do
+		for _,nPos in ipairs(neighbors(current.pos)) do
 			local nk = key(nPos)
 			if closed[nk] then continue end
 
-            local clearancePenalty = 0
-            local dir = (nPos - current.pos)
-            local right = dir:Cross(Vector3.new(0,1,0)).Unit
+			local dir = (nPos - current.pos)
 
-            local c1 = Pathfinding:GetClearance(current.pos, dir, ignore)
-            local c2 = Pathfinding:GetClearance(current.pos, dir + right*0.5, ignore)
-            local c3 = Pathfinding:GetClearance(current.pos, dir - right*0.5, ignore)
+			if math.abs(dir.X) > 0 and math.abs(dir.Z) > 0 then
+				local side1 = current.pos + Vector3.new(dir.X,0,0)
+				local side2 = current.pos + Vector3.new(0,0,dir.Z)
 
-            if math.abs(dir.X) > 0 and math.abs(dir.Z) > 0 then
-	        local side1 = current.pos + Vector3.new(dir.X,0,0)
-	        local side2 = current.pos + Vector3.new(0,0,dir.Z)
+				if not isWalkable(current.pos, side1)
+				or not isWalkable(current.pos, side2) then
+					continue
+				end
+			end
 
-	        if Pathfinding:GetVision(current.pos, side1, ignore) or Pathfinding:GetVision(current.pos, side2, ignore) then
-		    continue
-	        end
+			if not isWalkable(current.pos, nPos) then
+				continue
+			end
+
+			local moveCost = (dir.Magnitude > step) and 1.4 or 1
+			local g = current.g + moveCost
+            local h = heuristic(nPos, goalPos)
+            local f = g + h
+
+            if params.MachineLearning then
+            	local toGoal = goalPos - nPos
+
+        	local input = {
+        		toGoal.X / 50,
+        		toGoal.Z / 50,
+        		0,
+        		toGoal.Magnitude / 50
+        	}
+
+        	local nn = self:GetNNBias(input)
+
+        	local alpha = 0.5
+        	local influence = nn * alpha * h
+
+        	f += influence
             end
-
-            local clearanceScore = math.min(c1, c2, c3)
-
-            local penalty = (1 - clearanceScore) * 10
-
-	        local nearby = Pathfinding:GetVision(nPos, nPos + Vector3.new(2,0,0), ignore)
-	       if nearby then
-		        clearancePenalty += 2
-	        end
-
-			local g = current.g + step
-
-			local toGoal = goalPos - nPos
-
-			local input = {
-				toGoal.X/50,
-				toGoal.Z/50,
-				1 - clearanceScore,
-				toGoal.Magnitude/50
-			}
-
-			local raw = Network.feed(input)
-
-            local nn = math.tanh(raw)
-
-            local h = heuristic(nPos, goalPos) * (1 + (1 - clearanceScore))
-
-            local alpha = math.min(1, #dataset / 500)
-            local influence = nn * 5 * alpha
-
-            local f = g + h + influence + clearancePenalty + penalty
 
 			if not open[nk] or g < open[nk].g then
 				open[nk] = {
@@ -397,74 +344,6 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 
 	return nil
 end
-
-function Pathfinding:Train(epochs)
-	for e=1,epochs do
-		for _,data in ipairs(dataset) do
-			Network.feed(data[1])
-			Network.backprop(data[2])
-		end
-	end
-end
-
-function Pathfinding:AdvancedTrain(dataset2,epochs)
-	for e=1,epochs do
-		for _,data in ipairs(dataset2) do
-			Network.feed(data[1])
-			Network.backprop(data[2])
-		end
-	end
-end
-
-function Pathfinding:RecordPlayerMovement(state: boolean)
-	recordPlayer = state
-end
-
-task.spawn(function()
-	local Players = game:GetService("Players")
-	local player = Players:GetPlayers()[1]
-
-	if not player then return end
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hrp = char:WaitForChild("HumanoidRootPart")
-
-	local lastPos = hrp.Position
-	local lastTime = tick()
-
-	while true do
-		task.wait(0.1)
-
-		if not recordPlayer then
-			lastPos = hrp.Position
-			lastTime = tick()
-			continue
-		end
-
-		local pos = hrp.Position
-		local now = tick()
-
-		local dt = now - lastTime
-		if dt <= 0 then continue end
-
-		local vel = (pos - lastPos) / dt
-
-		table.insert(playerDataset, {
-			{
-				pos.X/100,
-				pos.Z/100,
-				vel.X/50,
-				vel.Z/50
-			},
-			{
-				vel.X/50,
-				vel.Z/50
-			}
-		})
-
-		lastPos = pos
-		lastTime = now
-	end
-end)
 
 Network.Pathfinding = Pathfinding
 Network.Datasets = {
