@@ -205,12 +205,27 @@ local function smoothPath(path, ignore)
 	while i < #path do
 		local j = #path
 
-		while j > i + 1 do
-			if not Pathfinding:GetVision(path[i], path[j], ignore) then
-				break
-			end
-			j -= 1
-		end
+        local maxSkip = 20
+
+        while j > i + 1 do
+	        if (path[j] - path[i]).Magnitude > maxSkip then
+	    	j -= 1
+	    	continue
+    	end
+
+    	if Pathfinding:HasLineOfSight(path[i], path[j], ignore) then
+	    	break
+    	end
+        local dir = path[j] - path[i]
+        local clearance = Pathfinding:GetClearance(path[i], dir, ignore)
+
+        if clearance > 0.7 then
+     	break
+        end
+ 
+ 
+    	j -= 1
+        end
 
 		table.insert(smooth, path[j])
 		i = j
