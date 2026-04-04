@@ -222,16 +222,16 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 
 			local raw = Network.feed(input)
 
-      local nn = math.tanh(raw)
+            local nn = math.tanh(raw)
 
-      local h = heuristic(nPos, goalPos)
+            local h = heuristic(nPos, goalPos)
 
-      local alpha = math.min(1, #dataset / 1000)
-      local confidence = math.abs(nn)
+            local alpha = math.min(1, #dataset / 1000)
+            local confidence = math.abs(nn)
 
-      local influence = math.clamp(nn * alpha * confidence, -5, 5)
+            local influence = math.clamp(nn * alpha * confidence, -5, 5)
 
-      local f = g + h + influence
+            local f = g + h + influence
 
 			table.insert(self._memory, input)
 
