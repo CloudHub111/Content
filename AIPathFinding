@@ -1,0 +1,290 @@
+local Network = {}
+
+local inputSize = 4 -- dx, dz, blocked, distance
+local hiddenSize = 8
+local outputSize = 1
+
+local learningRate = 0.01
+local Random = Random.new(os.clock())
+
+local function relu(x)
+	return (x > 0) and x or 0.01 * x
+end
+
+local function reluDerivative(x)
+	return (x > 0) and 1 or 0.01
+end
+
+local function newNeuron(prevSize)
+	local n = {
+		value = 0,
+		sum = 0,
+		delta = 0,
+		bias = Random:NextNumber()*2-1,
+		weights = {}
+	}
+
+	for i=1,(prevSize or 0) do
+		n.weights[i] = Random:NextNumber()*2-1
+	end
+
+	return n
+end
+
+Network.layers = {
+	{}, {}, {}
+}
+
+for i=1,inputSize do
+	Network.layers[1][i] = newNeuron()
+end
+
+for i=1,hiddenSize do
+	Network.layers[2][i] = newNeuron(inputSize)
+end
+
+for i=1,outputSize do
+	Network.layers[3][i] = newNeuron(hiddenSize)
+end
+
+function Network.feed(input)
+	for i,n in ipairs(Network.layers[1]) do
+		n.value = input[i]
+	end
+
+	for l=2,#Network.layers do
+		local layer = Network.layers[l]
+		local prev = Network.layers[l-1]
+
+		for _,n in ipairs(layer) do
+			local sum = n.bias
+
+			for i,p in ipairs(prev) do
+				sum += p.value * n.weights[i]
+			end
+
+			n.sum = sum
+			n.value = relu(sum)
+		end
+	end
+
+	return Network.layers[#Network.layers][1].value
+end
+
+function Network.backprop(target)
+	local out = Network.layers[#Network.layers][1]
+	local err = out.value - target
+
+	out.delta = err * reluDerivative(out.sum)
+
+	for l=#Network.layers-1,2,-1 do
+		local layer = Network.layers[l]
+		local nextLayer = Network.layers[l+1]
+
+		for i,n in ipairs(layer) do
+			local e = 0
+			for _,nx in ipairs(nextLayer) do
+				e += nx.weights[i] * nx.delta
+			end
+			n.delta = e * reluDerivative(n.sum)
+		end
+	end
+
+	for l=2,#Network.layers do
+		local layer = Network.layers[l]
+		local prev = Network.layers[l-1]
+
+		for _,n in ipairs(layer) do
+			for i,p in ipairs(prev) do
+				n.weights[i] -= learningRate * n.delta * p.value
+			end
+			n.bias -= learningRate * n.delta
+		end
+	end
+end
+
+local Pathfinding = {}
+
+local dataset = {}
+local recording = false
+
+function Pathfinding:Record(state: boolean)
+	recording = state
+end
+
+function Pathfinding:GetVision(a, b, ignore)
+	local dir = b - a
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = ignore or {}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+
+	local result = workspace:Raycast(a, dir, params)
+
+	return result ~= nil
+end
+
+local function heuristic(a,b)
+	return (a - b).Magnitude
+end
+
+local function neighbors(pos, step)
+	return {
+		pos + Vector3.new(step,0,0),
+		pos + Vector3.new(-step,0,0),
+		pos + Vector3.new(0,0,step),
+		pos + Vector3.new(0,0,-step),
+	}
+end
+
+function Pathfinding:FindPath(startPos, goalPos, params)
+	params = params or {}
+	local step = params.Step or 4
+	local ignore = params.Ignore or {}
+
+	local open = {}
+	local closed = {}
+
+	local function key(v)
+		return math.floor(v.X)..","..math.floor(v.Z)
+	end
+
+	open[key(startPos)] = {
+		pos = startPos,
+		g = 0,
+		f = 0
+	}
+
+	while true do
+		local currentKey, current
+
+		for k,v in pairs(open) do
+			if not current or v.f < current.f then
+				current = v
+				currentKey = k
+			end
+		end
+
+		if not current then break end
+
+		if (current.pos - goalPos).Magnitude < step then
+			local path = {}
+			while current do
+				table.insert(path,1,current.pos)
+				current = current.parent
+			end
+
+			if recording then
+				for i=1,#path-1 do
+					local cur = path[i]
+					local nxt = path[i+1]
+
+					local move = (nxt - cur)
+					local dx = move.X
+					local dz = move.Z
+
+					local toGoal = goalPos - cur
+
+					table.insert(dataset,{
+						{
+							toGoal.X/50,
+							toGoal.Z/50,
+							0,
+							toGoal.Magnitude/50
+						},
+						1 -- good move
+					})
+				end
+			end
+
+			return path
+		end
+
+		open[currentKey] = nil
+		closed[currentKey] = true
+
+		for _,nPos in ipairs(neighbors(current.pos, step)) do
+			local nk = key(nPos)
+			if closed[nk] then continue end
+
+			local blocked = Pathfinding:GetVision(current.pos, nPos, ignore)
+			if blocked then continue end
+
+			local g = current.g + step
+
+			local toGoal = goalPos - nPos
+
+			local input = {
+				toGoal.X/50,
+				toGoal.Z/50,
+				blocked and 1 or 0,
+				toGoal.Magnitude/50
+			}
+
+			local raw = Network.feed(input)
+
+      local nn = math.tanh(raw)
+
+      local h = heuristic(nPos, goalPos)
+
+      local alpha = math.min(1, #dataset / 1000)
+      local confidence = math.abs(nn)
+
+      local influence = math.clamp(nn * alpha * confidence, -5, 5)
+
+      local f = g + h + influence
+
+			table.insert(self._memory, input)
+
+			if not open[nk] or g < open[nk].g then
+				open[nk] = {
+					pos = nPos,
+					g = g,
+					f = f,
+					parent = current
+				}
+			end
+		end
+	end
+
+	return nil
+end
+
+function Pathfinding:Reward(value)
+	self._reward = value
+end
+
+function Pathfinding:ApplyReward()
+	if not self._memory then return end
+
+	for _, input in ipairs(self._memory) do
+		table.insert(dataset, {
+			input,
+			self._reward or 0
+		})
+	end
+
+	table.clear(self._memory)
+	self._reward = 0
+end
+
+function Pathfinding:Train(epochs)
+	for e=1,epochs do
+		for _,data in ipairs(dataset) do
+			Network.feed(data[1])
+			Network.backprop(data[2])
+		end
+	end
+end
+
+function Pathfinding:AdvancedTrain(dataset2,epochs)
+	for e=1,epochs do
+		for _,data in ipairs(dataset2) do
+			Network.feed(data[1])
+			Network.backprop(data[2])
+		end
+	end
+end
+
+Network.Pathfinding = Pathfinding
+
+return Network
