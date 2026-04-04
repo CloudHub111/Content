@@ -175,6 +175,19 @@ function Pathfinding:GetVision(a, b, ignore)
 	return false
 end
 
+function Pathfinding:HasLineOfSight(a, b, ignore)
+	local dir = (b - a)
+	local dist = dir.Magnitude
+
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = ignore or {}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+
+	local result = workspace:Raycast(a, dir.Unit * dist, params)
+
+	return result == nil
+end
+
 local function heuristic(a,b)
 	return (a - b).Magnitude
 end
@@ -208,24 +221,17 @@ local function smoothPath(path, ignore)
         local maxSkip = 20
 
         while j > i + 1 do
-	        if (path[j] - path[i]).Magnitude > maxSkip then
-	    	j -= 1
-	    	continue
-    	end
+        	if (path[j] - path[i]).Magnitude > maxSkip then
+        		j -= 1
+        		continue
+        	end
 
-    	if Pathfinding:HasLineOfSight(path[i], path[j], ignore) then
-	    	break
-    	end
-        local dir = path[j] - path[i]
-        local clearance = Pathfinding:GetClearance(path[i], dir, ignore)
+        	if Pathfinding:HasLineOfSight(path[i], path[j], ignore) then
+         		break
+        	end
 
-        if clearance > 0.7 then
-     	break
-        end
- 
- 
-    	j -= 1
-        end
+        	j -= 1
+            end
 
 		table.insert(smooth, path[j])
 		i = j
