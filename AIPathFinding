@@ -225,7 +225,7 @@ function Pathfinding:GetClearance(a, dir, ignore)
 		return result.Distance / 6
 	end
 
-	return 6
+	return 1
 end
 
 function Pathfinding:FindPath(startPos, goalPos, params)
@@ -298,11 +298,15 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			local nk = key(nPos)
 			if closed[nk] then continue end
 
-			local blocked = Pathfinding:GetVision(current.pos, nPos, ignore)
-
             local clearancePenalty = 0
             local dir = (nPos - current.pos)
-            local clearanceScore = Pathfinding:GetClearanceScore(current.pos, dir, ignore)
+            local right = dir:Cross(Vector3.new(0,1,0)).Unit
+
+            local c1 = Pathfinding:GetClearance(current.pos, dir, ignore)
+            local c2 = Pathfinding:GetClearance(current.pos, dir + right*0.5, ignore)
+            local c3 = Pathfinding:GetClearance(current.pos, dir - right*0.5, ignore)
+
+            local clearanceScore = math.min(c1, c2, c3)
 
             local penalty = (1 - clearanceScore) * 10
 
@@ -318,7 +322,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			local input = {
 				toGoal.X/50,
 				toGoal.Z/50,
-				blocked and 1 or 0,
+				1 - clearanceScore,
 				toGoal.Magnitude/50
 			}
 
@@ -328,10 +332,8 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 
             local h = heuristic(nPos, goalPos)
 
-            local alpha = math.min(1, #dataset / 1000)
-            local confidence = math.abs(nn)
-
-            local influence = nn * 10
+            local alpha = math.min(1, #dataset / 500)
+            local influence = nn * 5 * alpha
 
             local f = g + h + influence + clearancePenalty + penalty
 
