@@ -185,6 +185,11 @@ local function neighbors(pos, step)
 		pos + Vector3.new(-step,0,0),
 		pos + Vector3.new(0,0,step),
 		pos + Vector3.new(0,0,-step),
+
+		pos + Vector3.new(step,0,step),
+		pos + Vector3.new(-step,0,step),
+		pos + Vector3.new(step,0,-step),
+		pos + Vector3.new(-step,0,-step),
 	}
 end
 
@@ -219,13 +224,25 @@ function Pathfinding:GetClearance(a, dir, ignore)
 	params.FilterDescendantsInstances = ignore or {}
 	params.FilterType = Enum.RaycastFilterType.Blacklist
 
-	local result = workspace:Raycast(a, dir.Unit * 6, params)
+	local maxDist = 6
+	local right = dir:Cross(Vector3.new(0,1,0)).Unit
 
-	if result then
-		return result.Distance / 6
+	local offsets = {
+		Vector3.new(),
+		right * 1.5,
+		-right * 1.5
+	}
+
+	local minDist = maxDist
+
+	for _, offset in ipairs(offsets) do
+		local result = workspace:Raycast(a + offset, dir.Unit * maxDist, params)
+		if result then
+			minDist = math.min(minDist, result.Distance)
+		end
 	end
 
-	return 1
+	return minDist / maxDist
 end
 
 function Pathfinding:FindPath(startPos, goalPos, params)
@@ -306,6 +323,15 @@ function Pathfinding:FindPath(startPos, goalPos, params)
             local c2 = Pathfinding:GetClearance(current.pos, dir + right*0.5, ignore)
             local c3 = Pathfinding:GetClearance(current.pos, dir - right*0.5, ignore)
 
+            if math.abs(dir.X) > 0 and math.abs(dir.Z) > 0 then
+	        local side1 = current.pos + Vector3.new(dir.X,0,0)
+	        local side2 = current.pos + Vector3.new(0,0,dir.Z)
+
+	        if Pathfinding:GetVision(current.pos, side1, ignore) or Pathfinding:GetVision(current.pos, side2, ignore) then
+		    continue
+	        end
+            end
+
             local clearanceScore = math.min(c1, c2, c3)
 
             local penalty = (1 - clearanceScore) * 10
@@ -330,7 +356,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 
             local nn = math.tanh(raw)
 
-            local h = heuristic(nPos, goalPos)
+            local h = heuristic(nPos, goalPos) * (1 + (1 - clearanceScore))
 
             local alpha = math.min(1, #dataset / 500)
             local influence = nn * 5 * alpha
