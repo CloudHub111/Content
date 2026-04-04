@@ -152,6 +152,8 @@ end
 
 function Pathfinding:GetVision(a, b, ignore)
 	local dir = (b - a)
+    local distance = dir.Magnitude
+    dir = dir.Unit * math.min(distance, 4)
 	local right = dir:Cross(Vector3.new(0,1,0)).Unit
 
 	local offsets = {
@@ -167,7 +169,7 @@ function Pathfinding:GetVision(a, b, ignore)
 
 	for _, offset in ipairs(offsets) do
 		local result = workspace:Raycast(a + offset, dir, params)
-		if result then
+		if result and result.Distance<3 then
 			return true
 		end
 	end
@@ -297,8 +299,6 @@ function Pathfinding:FindPath(startPos, goalPos, params)
             local influence = math.clamp(nn * alpha * confidence, -5, 5)
 
             local f = g + h + influence + clearancePenalty
-
-			table.insert(self._memory, input)
 
 			if not open[nk] or g < open[nk].g then
 				open[nk] = {
