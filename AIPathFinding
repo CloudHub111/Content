@@ -142,7 +142,9 @@ end
 Network:Load()
 
 local Pathfinding = {}
-local Dataset = {}
+
+local paramsRay = RaycastParams.new()
+paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
 
 local function heuristic(a, b)
 	return (a - b).Magnitude
@@ -152,23 +154,80 @@ local function key(v, step)
 	return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
 end
 
-local paramsRay = RaycastParams.new()
-paramsRay.FilterDescendantsInstances = {}
-paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
+local function getCharacterSize(character)
+	local size = character:GetExtentsSize()
+	return Vector3.new(size.X, size.Y, size.Z)
+end
 
 local function isWalkable(from, to, ignore)
 	local dir = (to - from)
 	local dist = dir.Magnitude
 
-	paramsRay.FilterDescendantsInstances = ignore
-	paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
+	if dist < 0.001 then
+		return true
+	end
 
-	local result = workspace:Raycast(from + Vector3.new(0,1,0), dir.Unit * dist, paramsRay)
+	paramsRay.FilterDescendantsInstances = ignore or {}
+
+	local result = workspace:Raycast(
+		from + Vector3.new(0,2,0),
+		dir.Unit * dist,
+		paramsRay
+	)
 
 	return result == nil
 end
 
-local added = false
+local function canFit(pos, size, ignore, character)
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+
+	local filter = {character}
+	if ignore then
+		for _,v in ipairs(ignore) do
+			table.insert(filter, v)
+		end
+	end
+
+	params.FilterDescendantsInstances = filter
+
+	local parts = workspace:GetPartBoundsInBox(
+		CFrame.new(pos + Vector3.new(0, size.Y/2, 0)),
+		size,
+		params
+	)
+
+	for _,part in ipairs(parts) do
+		if part:IsDescendantOf(character) then
+			continue
+		end
+
+		if part:IsA("BasePart") and part.CanCollide and part.Transparency < 1 then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function getClearancePenalty(pos, dir, spacing, ignore)
+	if spacing <= 0 then return 0 end
+
+	local right = dir.Magnitude > 0 and dir:Cross(Vector3.new(0,1,0)).Unit or Vector3.zero
+
+	paramsRay.FilterDescendantsInstances = ignore or {}
+
+	local function hit(offset)
+		local r = workspace:Raycast(
+			pos + offset + Vector3.new(0,2,0),
+			Vector3.new(0,-4,0),
+			paramsRay
+		)
+		return r and 1 or 0
+	end
+
+	return (hit(right * spacing) + hit(-right * spacing)) * spacing
+end
 
 local function neighbors(pos, step)
 	return {
@@ -186,19 +245,17 @@ end
 
 function Pathfinding:GetNNBias(input)
 	if not Network then return 0 end
-
-	local raw = Network.feed(input)
-	local nn = math.tanh(raw) -- normalize (-1 → 1)
-
-	return nn
+	return math.tanh(Network.feed(input))
 end
 
-function Pathfinding:FindPath(startPos, goalPos, params)
+function Pathfinding:FindPath(character, startPos, goalPos, params)
 	params = params or {}
 
 	local step = params.Step or 4
 	local spacing = params.Spacing or 2
 	local ignore = params.Ignore or {}
+
+	local charSize = getCharacterSize(character) * 0.8
 
 	local open = {}
 	local closed = {}
@@ -210,7 +267,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 	}
 
 	local iterations = 0
-	local maxIterations = 5000 -- prevents lag freeze
+	local maxIterations = 5000
 
 	while iterations < maxIterations do
 		iterations += 1
@@ -228,7 +285,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			return nil
 		end
 
-		if (current.pos - goalPos).Magnitude < step then
+		if (current.pos - goalPos).Magnitude < step * 2 then
 			local path = {}
 			while current do
 				table.insert(path,1,current.pos)
@@ -240,10 +297,11 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 		open[currentKey] = nil
 		closed[currentKey] = true
 
+		local added = false
+
 		for _,nPos in ipairs(neighbors(current.pos, step)) do
 			local nk = key(nPos, step)
 			if closed[nk] then continue end
-            added = true
 
 			local dir = (nPos - current.pos)
 
@@ -257,62 +315,37 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 				end
 			end
 
-        if not added then -- fallback
-        	for _,nPos in ipairs(neighbors(current.pos, step)) do
-       		local nk = key(nPos, step)
-    		if not closed[nk] then
-    			open[nk] = {
-    				pos = nPos,
-     				g = current.g + 1,
-    				f = current.g + heuristic(nPos, goalPos),
-    				parent = current
-    			}
-    		end
-    	end
-    end
+			if not isWalkable(current.pos, nPos, ignore) then
+				continue
+			end
 
-			local blocked = not isWalkable(current.pos, nPos, ignore)
-            if blocked then continue end
+			if not canFit(nPos, charSize, ignore, character) then
+				continue
+			end
+
+			added = true
 
 			local moveCost = (dir.Magnitude > step) and 1.4 or 1
 			local g = current.g + moveCost
-            local h = heuristic(nPos, goalPos)
+			local h = heuristic(nPos, goalPos)
 
-            local right = dir.Magnitude > 0 and dir:Cross(Vector3.new(0,1,0)).Unit or Vector3.zero
+			local clearance = getClearancePenalty(nPos, dir, spacing, ignore)
 
-            local function getSideHit(offset)
-         	paramsRay.FilterDescendantsInstances = ignore
-         	paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
+			local f = g + h + clearance
 
-        	local result = workspace:Raycast(nPos + offset, Vector3.new(0,-3,0), paramsRay)
-         	return result and 1 or 0
-            end
+			if params.MachineLearning then
+				local toGoal = goalPos - nPos
 
-            local sidePenalty =
-             	getSideHit(right * spacing) +
-             	getSideHit(-right * spacing)
+				local input = {
+					math.clamp(toGoal.X/50,-1,1),
+					math.clamp(toGoal.Z/50,-1,1),
+					0,
+					math.clamp(toGoal.Magnitude/50,0,1)
+				}
 
-            local spacingPenalty = sidePenalty * 2
-
-            local f = g + h + spacingPenalty
-
-            if params.MachineLearning then
-            	local toGoal = goalPos - nPos
-
-        	local input = {
-            	math.clamp(toGoal.X / 50, -1, 1),
-            	math.clamp(toGoal.Z / 50, -1, 1),
-            	blocked and 1 or 0,
-	            math.clamp(toGoal.Magnitude / 50, 0, 1)
-             }
-
-        	local nn = self:GetNNBias(input)
-
-        	local alpha = 0.5
-        	local influence = nn * alpha * h
-
-        	f += influence
-            end
+				local nn = self:GetNNBias(input)
+				f += nn * 0.5 * h
+			end
 
 			if not open[nk] or g < open[nk].g then
 				open[nk] = {
@@ -323,15 +356,25 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 				}
 			end
 		end
+
+		if not added then
+			for _,nPos in ipairs(neighbors(current.pos, step)) do
+				local nk = key(nPos, step)
+				if not closed[nk] then
+					open[nk] = {
+						pos = nPos,
+						g = current.g + 1,
+						f = current.g + heuristic(nPos, goalPos),
+						parent = current
+					}
+				end
+			end
+		end
 	end
 
 	return nil
 end
 
 Network.Pathfinding = Pathfinding
-Network.Datasets = {
-dataset,
-playerDataset
-}
 
 return Network
