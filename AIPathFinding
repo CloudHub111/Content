@@ -300,11 +300,11 @@ function Pathfinding:FindPath(startPos, goalPos, params)
             	local toGoal = goalPos - nPos
 
         	local input = {
-        		toGoal.X / 50,
-        		toGoal.Z / 50,
-        		blocked and 1 or 0,
-        		toGoal.Magnitude / 50
-        	}
+            	math.clamp(toGoal.X / 50, -1, 1),
+            	math.clamp(toGoal.Z / 50, -1, 1),
+            	blocked and 1 or 0,
+	            math.clamp(toGoal.Magnitude / 50, 0, 1)
+             }
 
         	local nn = self:GetNNBias(input)
 
