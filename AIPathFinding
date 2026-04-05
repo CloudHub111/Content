@@ -152,11 +152,14 @@ local function key(v, step)
 	return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
 end
 
+local paramsRay = RaycastParams.new()
+paramsRay.FilterDescendantsInstances = {}
+paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
+
 local function isWalkable(from, to, ignore)
 	local dir = (to - from)
 	local dist = dir.Magnitude
 
-	local paramsRay = RaycastParams.new()
 	paramsRay.FilterDescendantsInstances = ignore
 	paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
 
@@ -238,9 +241,9 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 		closed[currentKey] = true
 
 		for _,nPos in ipairs(neighbors(current.pos, step)) do
-            added = true
 			local nk = key(nPos, step)
 			if closed[nk] then continue end
+            added = true
 
 			local dir = (nPos - current.pos)
 
@@ -254,7 +257,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 				end
 			end
 
-        if not added then
+        if not added then -- fallback
         	for _,nPos in ipairs(neighbors(current.pos, step)) do
        		local nk = key(nPos, step)
     		if not closed[nk] then
@@ -275,10 +278,9 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			local g = current.g + moveCost
             local h = heuristic(nPos, goalPos)
 
-            local right = dir:Cross(Vector3.new(0,1,0)).Unit
+            local right = dir.Magnitude > 0 and dir:Cross(Vector3.new(0,1,0)).Unit or Vector3.zero
 
             local function getSideHit(offset)
-        	local paramsRay = RaycastParams.new()
          	paramsRay.FilterDescendantsInstances = ignore
          	paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
 
@@ -300,7 +302,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
         	local input = {
         		toGoal.X / 50,
         		toGoal.Z / 50,
-        		0,
+        		blocked and 1 or 0,
         		toGoal.Magnitude / 50
         	}
 
