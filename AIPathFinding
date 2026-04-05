@@ -148,11 +148,11 @@ local function heuristic(a, b)
 	return (a - b).Magnitude
 end
 
-local function getKey(v, step)
+local function key(v, step)
 	return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
 end
 
-local function isWalkable(from, to)
+local function isWalkable(from, to, ignore)
 	local dir = (to - from)
 	local dist = dir.Magnitude
 
@@ -167,7 +167,7 @@ end
 
 local added = false
 
-local function getNeighbors(pos, step)
+local function neighbors(pos, step)
 	return {
 		pos + Vector3.new(step,0,0),
 		pos + Vector3.new(-step,0,0),
@@ -248,8 +248,8 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 				local side1 = current.pos + Vector3.new(dir.X,0,0)
 				local side2 = current.pos + Vector3.new(0,0,dir.Z)
 
-				if not isWalkable(current.pos, side1)
-				or not isWalkable(current.pos, side2) then
+				if not isWalkable(current.pos, side1, ignore)
+				or not isWalkable(current.pos, side2, ignore) then
 					continue
 				end
 			end
@@ -268,7 +268,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
     	end
     end
 
-			local blocked = not isWalkable(current.pos, nPos)
+			local blocked = not isWalkable(current.pos, nPos, ignore)
             if blocked then continue end
 
 			local moveCost = (dir.Magnitude > step) and 1.4 or 1
