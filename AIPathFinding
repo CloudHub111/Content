@@ -152,22 +152,20 @@ local function getKey(v, step)
 	return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
 end
 
-local function isWalkable(from, to, ignore)
+local function isWalkable(from, to)
 	local dir = (to - from)
 	local dist = dir.Magnitude
 
-	local params = RaycastParams.new()
-	params.FilterDescendantsInstances = ignore or {}
-	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local paramsRay = RaycastParams.new()
+	paramsRay.FilterDescendantsInstances = ignore
+	paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
 
-	local hit = workspace:Raycast(from + Vector3.new(0,2,0), dir.Unit * dist, params)
-	if hit then return false end
+	local result = workspace:Raycast(from + Vector3.new(0,1,0), dir.Unit * dist, paramsRay)
 
-	local hit2 = workspace:Raycast(from, dir.Unit * dist, params)
-	if hit2 then return false end
-
-	return true
+	return result == nil
 end
+
+local added = false
 
 local function getNeighbors(pos, step)
 	return {
@@ -201,55 +199,6 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 
 	local open = {}
 	local closed = {}
-
-	local function key(v)
-		return math.floor(v.X/step) .. "," .. math.floor(v.Z/step)
-	end
-
-	local function heuristic(a,b)
-		return (a - b).Magnitude
-	end
-
-	local function isWalkable(from, to)
-		local dir = (to - from)
-		local dist = dir.Magnitude
-
-		local paramsRay = RaycastParams.new()
-		paramsRay.FilterDescendantsInstances = ignore
-		paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
-
-		local right = dir:Cross(Vector3.new(0,1,0)).Unit
-
-		local offsets = {
-			Vector3.new(),
-			right * spacing,
-			-right * spacing,
-			Vector3.new(0,2,0)
-		}
-
-		for _, offset in ipairs(offsets) do
-			local result = workspace:Raycast(from + offset, dir.Unit * dist, paramsRay)
-			if result then
-				return false
-			end
-		end
-
-		return true
-	end
-
-	local function neighbors(pos)
-		return {
-			pos + Vector3.new(step,0,0),
-			pos + Vector3.new(-step,0,0),
-			pos + Vector3.new(0,0,step),
-			pos + Vector3.new(0,0,-step),
-
-			pos + Vector3.new(step,0,step),
-			pos + Vector3.new(-step,0,step),
-			pos + Vector3.new(step,0,-step),
-			pos + Vector3.new(-step,0,-step),
-		}
-	end
 
 	open[key(startPos)] = {
 		pos = startPos,
@@ -289,6 +238,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 		closed[currentKey] = true
 
 		for _,nPos in ipairs(neighbors(current.pos)) do
+            added = true
 			local nk = key(nPos)
 			if closed[nk] then continue end
 
@@ -304,14 +254,45 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 				end
 			end
 
-			if not isWalkable(current.pos, nPos) then
-				continue
-			end
+        if not added then
+        	for _,nPos in ipairs(neighbors(current.pos)) do
+       		local nk = key(nPos)
+    		if not closed[nk] then
+    			open[nk] = {
+    				pos = nPos,
+     				g = current.g + 1,
+    				f = current.g + heuristic(nPos, goalPos),
+    				parent = current
+    			}
+    		end
+    	end
+    end
+
+			local blocked = not isWalkable(current.pos, nPos)
+            if blocked then continue end
 
 			local moveCost = (dir.Magnitude > step) and 1.4 or 1
 			local g = current.g + moveCost
             local h = heuristic(nPos, goalPos)
-            local f = g + h
+
+            local right = dir:Cross(Vector3.new(0,1,0)).Unit
+
+            local function getSideHit(offset)
+        	local paramsRay = RaycastParams.new()
+         	paramsRay.FilterDescendantsInstances = ignore
+         	paramsRay.FilterType = Enum.RaycastFilterType.Blacklist
+
+        	local result = workspace:Raycast(nPos + offset, Vector3.new(0,-3,0), paramsRay)
+         	return result and 1 or 0
+            end
+
+            local sidePenalty =
+             	getSideHit(right * spacing) +
+             	getSideHit(-right * spacing)
+
+            local spacingPenalty = sidePenalty * 2
+
+            local f = g + h + spacingPenalty
 
             if params.MachineLearning then
             	local toGoal = goalPos - nPos
