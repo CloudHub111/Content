@@ -200,7 +200,7 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 	local open = {}
 	local closed = {}
 
-	open[key(startPos)] = {
+	open[key(startPos, step)] = {
 		pos = startPos,
 		g = 0,
 		f = heuristic(startPos, goalPos)
@@ -237,9 +237,9 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 		open[currentKey] = nil
 		closed[currentKey] = true
 
-		for _,nPos in ipairs(neighbors(current.pos)) do
+		for _,nPos in ipairs(neighbors(current.pos, step)) do
             added = true
-			local nk = key(nPos)
+			local nk = key(nPos, step)
 			if closed[nk] then continue end
 
 			local dir = (nPos - current.pos)
@@ -255,8 +255,8 @@ function Pathfinding:FindPath(startPos, goalPos, params)
 			end
 
         if not added then
-        	for _,nPos in ipairs(neighbors(current.pos)) do
-       		local nk = key(nPos)
+        	for _,nPos in ipairs(neighbors(current.pos, step)) do
+       		local nk = key(nPos, step)
     		if not closed[nk] then
     			open[nk] = {
     				pos = nPos,
